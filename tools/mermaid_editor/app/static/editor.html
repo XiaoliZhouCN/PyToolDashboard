@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mermaid Editor Canvas</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #111827;
+            --panel: #1f2937;
+            --panel-2: #253043;
+            --border: #334155;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --accent: #38bdf8;
+            --subgraph: rgba(56, 189, 248, 0.12);
+            --node: #0f172a;
+            --edge: #a5b4fc;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        .shell {
+            display: grid;
+            grid-template-rows: 48px 1fr;
+            height: 100vh;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .toolbar button {
+            border: 1px solid var(--border);
+            background: var(--panel-2);
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .toolbar button:hover {
+            border-color: var(--accent);
+        }
+
+        .toolbar .hint {
+            margin-left: auto;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        svg {
+            width: 100%;
+            height: calc(100vh - 48px);
+            background:
+                radial-gradient(circle at center, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+                var(--bg);
+            background-size: 24px 24px;
+        }
+
+        .subgraph {
+            fill: var(--subgraph);
+            stroke: #38bdf8;
+            stroke-width: 1.5;
+            rx: 12;
+            ry: 12;
+        }
+
+        .subgraph-title {
+            fill: #7dd3fc;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .node {
+            fill: var(--node);
+            stroke: #60a5fa;
+            stroke-width: 1.5;
+            rx: 10;
+            ry: 10;
+            cursor: move;
+        }
+
+        .node.selected,
+        .subgraph.selected {
+            stroke: #f59e0b;
+            stroke-width: 2.4;
+        }
+
+        .node-label {
+            fill: var(--text);
+            font-size: 13px;
+            dominant-baseline: middle;
+            text-anchor: middle;
+            pointer-events: none;
+        }
+
+        .edge {
+            stroke: var(--edge);
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
+        }
+
+        .edge.dotted {
+            stroke-dasharray: 7 5;
+        }
+
+        .edge.plain {
+            marker-end: none;
+        }
+
+        .edge.thick {
+            stroke-width: 3;
+        }
+
+        .edge-label {
+            fill: #cbd5e1;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <div class="toolbar">
+            <button type="button" id="add-node">Add Node</button>
+            <button type="button" id="add-subgraph">Add Subgraph</button>
+            <button type="button" id="rename-item">Rename</button>
+            <button type="button" id="delete-item">Delete</button>
+            <button type="button" id="save-diagram">Save Layout</button>
+            <span class="hint">拖拽节点/子图；双击可重命名；新增节点默认放入当前选中子图。</span>
+        </div>
+        <svg id="canvas" viewBox="0 0 1800 1200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker
+                    id="arrowhead"
+                    markerWidth="8"
+                    markerHeight="8"
+                    refX="7"
+                    refY="4"
+                    orient="auto"
+                >
+                    <path d="M 0 0 L 8 4 L 0 8 z" fill="#a5b4fc"></path>
+                </marker>
+            </defs>
+            <g id="subgraphs-layer"></g>
+            <g id="edges-layer"></g>
+            <g id="nodes-layer"></g>
+        </svg>
+    </div>
+
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <script>
+        const state = {
+            diagram: null,
+            selected: null,
+            dragging: null,
+        };
+
+        let bridge = null;
+
+        const canvas = document.getElementById("canvas");
+        const subgraphsLayer = document.getElementById("subgraphs-layer");
+        const edgesLayer = document.getElementById("edges-layer");
+        const nodesLayer = document.getElementById("nodes-layer");
+
+        new QWebChannel(qt.webChannelTransport, (channel) => {
+            bridge = channel.objects.bridge;
+            bridge.pageReady();
+        });
+
+        function ensureDiagram(diagram) {
+            const cloned = JSON.parse(JSON.stringify(diagram));
+            cloned.nodes = cloned.nodes || [];
+            cloned.edges = cloned.edges || [];
+            cloned.subgraphs = cloned.subgraphs || [];
+            return cloned;
+        }
+
+        function notifyStatus(message) {
+            if (bridge) {
+                bridge.setStatus(message);
+            }
+        }
+
+        function saveDiagram() {
+            if (bridge && state.diagram) {
+                bridge.saveDiagram(JSON.stringify(state.diagram));
+            }
+        }
+
+        function getNodeById(nodeId) {
+            return state.diagram.nodes.find((node) => node.node_id === nodeId);
+        }
+
+        function getSubgraphById(subgraphId) {
+            return state.diagram.subgraphs.find(
+                (subgraph) => subgraph.subgraph_id === subgraphId
+            );
+        }
+
+        function getChildNodes(parentSubgraph) {
+            return state.diagram.nodes.filter(
+                (node) => node.parent_subgraph === parentSubgraph
+            );
+        }
+
+        function getChildSubgraphs(parentSubgraph) {
+            return state.diagram.subgraphs.filter(
+                (subgraph) => subgraph.parent_subgraph === parentSubgraph
+            );
+        }
+
+        function getDescendantSubgraphIds(rootId) {
+            const found = new Set([rootId]);
+            let changed = true;
+
+            while (changed) {
+                changed = false;
+                state.diagram.subgraphs.forEach((subgraph) => {
+                    if (
+                        subgraph.parent_subgraph &&
+                        found.has(subgraph.parent_subgraph) &&
+                        !found.has(subgraph.subgraph_id)
+                    ) {
+                        found.add(subgraph.subgraph_id);
+                        changed = true;
+                    }
+                });
+            }
+
+            return found;
+        }
+
+        function computeSubgraphBounds(subgraphId) {
+            const subgraph = getSubgraphById(subgraphId);
+            if (!subgraph) {
+                return { x: 40, y: 40, width: 260, height: 180 };
+            }
+
+            const descendantIds = getDescendantSubgraphIds(subgraphId);
+            const boxes = [];
+
+            state.diagram.nodes.forEach((node) => {
+                if (descendantIds.has(node.parent_subgraph)) {
+                    boxes.push({
+                        x: node.x ?? 80,
+                        y: node.y ?? 80,
+                        width: node.width ?? 160,
+                        height: node.height ?? 56,
+                    });
+                }
+            });
+
+            state.diagram.subgraphs.forEach((item) => {
+                if (
+                    item.subgraph_id !== subgraphId &&
+                    descendantIds.has(item.parent_subgraph)
+                ) {
+                    boxes.push({
+                        x: item.x ?? 40,
+                        y: item.y ?? 40,
+                        width: item.width ?? 260,
+                        height: item.height ?? 180,
+                    });
+                }
+            });
+
+            if (boxes.length === 0) {
+                return {
+                    x: subgraph.x ?? 40,
+                    y: subgraph.y ?? 40,
+                    width: subgraph.width ?? 260,
+                    height: subgraph.height ?? 180,
+                };
+            }
+
+            const minX = Math.min(...boxes.map((box) => box.x));
+            const minY = Math.min(...boxes.map((box) => box.y));
+            const maxX = Math.max(...boxes.map((box) => box.x + box.width));
+            const maxY = Math.max(...boxes.map((box) => box.y + box.height));
+            const padding = 24;
+            const topPadding = 44;
+
+            subgraph.x = Math.min(subgraph.x ?? minX - padding, minX - padding);
+            subgraph.y = Math.min(subgraph.y ?? minY - topPadding, minY - topPadding);
+            subgraph.width = Math.max(
+                subgraph.width ?? 260,
+                maxX - subgraph.x + padding
+            );
+            subgraph.height = Math.max(
+                subgraph.height ?? 180,
+                maxY - subgraph.y + padding
+            );
+
+            return {
+                x: subgraph.x,
+                y: subgraph.y,
+                width: subgraph.width,
+                height: subgraph.height,
+            };
+        }
+
+        function getPoint(evt) {
+            const point = canvas.createSVGPoint();
+            point.x = evt.clientX;
+            point.y = evt.clientY;
+            return point.matrixTransform(canvas.getScreenCTM().inverse());
+        }
+
+        function render() {
+            if (!state.diagram) {
+                return;
+            }
+
+            subgraphsLayer.innerHTML = "";
+            edgesLayer.innerHTML = "";
+            nodesLayer.innerHTML = "";
+
+            renderSubgraphs();
+            renderEdges();
+            renderNodes();
+        }
+
+        function renderSubgraphs() {
+            state.diagram.subgraphs.forEach((subgraph) => {
+                const bounds = computeSubgraphBounds(subgraph.subgraph_id);
+                const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                group.dataset.kind = "subgraph";
+                group.dataset.id = subgraph.subgraph_id;
+
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("class", `subgraph ${isSelected("subgraph", subgraph.subgraph_id) ? "selected" : ""}`.trim());
+                rect.setAttribute("x", bounds.x);
+                rect.setAttribute("y", bounds.y);
+                rect.setAttribute("width", bounds.width);
+                rect.setAttribute("height", bounds.height);
+                rect.addEventListener("pointerdown", startDrag);
+                rect.addEventListener("dblclick", () => renameSubgraph(subgraph.subgraph_id));
+                rect.addEventListener("click", () => selectItem("subgraph", subgraph.subgraph_id));
+
+                const title = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                title.setAttribute("class", "subgraph-title");
+                title.setAttribute("x", bounds.x + 16);
+                title.setAttribute("y", bounds.y + 24);
+                title.textContent = subgraph.title;
+
+                group.appendChild(rect);
+                group.appendChild(title);
+                subgraphsLayer.appendChild(group);
+            });
+        }
+
+        function renderNodes() {
+            state.diagram.nodes.forEach((node) => {
+                const x = node.x ?? 80;
+                const y = node.y ?? 80;
+                const width = node.width ?? 160;
+                const height = node.height ?? 56;
+
+                const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                group.dataset.kind = "node";
+                group.dataset.id = node.node_id;
+
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("class", `node ${isSelected("node", node.node_id) ? "selected" : ""}`.trim());
+                rect.setAttribute("x", x);
+                rect.setAttribute("y", y);
+                rect.setAttribute("width", width);
+                rect.setAttribute("height", height);
+                rect.addEventListener("pointerdown", startDrag);
+                rect.addEventListener("dblclick", () => renameNode(node.node_id));
+                rect.addEventListener("click", () => selectItem("node", node.node_id));
+
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("class", "node-label");
+                text.setAttribute("x", x + width / 2);
+                text.setAttribute("y", y + height / 2 + 1);
+                text.textContent = node.label || node.node_id;
+
+                group.appendChild(rect);
+                group.appendChild(text);
+                nodesLayer.appendChild(group);
+            });
+        }
+
+        function renderEdges() {
+            state.diagram.edges.forEach((edge) => {
+                const source = getNodeById(edge.source);
+                const target = getNodeById(edge.target);
+                if (!source || !target) {
+                    return;
+                }
+
+                const x1 = (source.x ?? 80) + (source.width ?? 160) / 2;
+                const y1 = (source.y ?? 80) + (source.height ?? 56) / 2;
+                const x2 = (target.x ?? 80) + (target.width ?? 160) / 2;
+                const y2 = (target.y ?? 80) + (target.height ?? 56) / 2;
+
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                line.setAttribute(
+                    "d",
+                    `M ${x1} ${y1} C ${x1 + 60} ${y1}, ${x2 - 60} ${y2}, ${x2} ${y2}`
+                );
+                line.setAttribute("class", `edge ${edge.style || "solid"}`.trim());
+                edgesLayer.appendChild(line);
+
+                if (edge.label) {
+                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.setAttribute("class", "edge-label");
+                    text.setAttribute("x", (x1 + x2) / 2);
+                    text.setAttribute("y", (y1 + y2) / 2 - 10);
+                    text.textContent = edge.label;
+                    edgesLayer.appendChild(text);
+                }
+            });
+        }
+
+        function selectItem(kind, id) {
+            state.selected = { kind, id };
+            render();
+        }
+
+        function isSelected(kind, id) {
+            return state.selected && state.selected.kind === kind && state.selected.id === id;
+        }
+
+        function startDrag(evt) {
+            evt.stopPropagation();
+            const group = evt.target.parentNode;
+            const point = getPoint(evt);
+            const kind = group.dataset.kind;
+            const id = group.dataset.id;
+            selectItem(kind, id);
+
+            let item;
+            if (kind === "node") {
+                item = getNodeById(id);
+            } else {
+                item = getSubgraphById(id);
+            }
+
+            if (!item) {
+                return;
+            }
+
+            state.dragging = {
+                kind,
+                id,
+                offsetX: point.x - (item.x ?? 0),
+                offsetY: point.y - (item.y ?? 0),
+                initialX: item.x ?? 0,
+                initialY: item.y ?? 0,
+                relatedSubgraphs:
+                    kind === "subgraph" ? Array.from(getDescendantSubgraphIds(id)) : [],
+                relatedSubgraphsOriginal:
+                    kind === "subgraph"
+                        ? Object.fromEntries(
+                              Array.from(getDescendantSubgraphIds(id)).map((subgraphId) => {
+                                  const subgraph = getSubgraphById(subgraphId);
+                                  return [
+                                      subgraphId,
+                                      {
+                                          x: subgraph?.x ?? 0,
+                                          y: subgraph?.y ?? 0,
+                                      },
+                                  ];
+                              })
+                          )
+                        : {},
+                relatedNodes:
+                    kind === "subgraph"
+                        ? state.diagram.nodes
+                              .filter((node) =>
+                                  getDescendantSubgraphIds(id).has(node.parent_subgraph)
+                              )
+                              .map((node) => ({
+                                  id: node.node_id,
+                                  x: node.x ?? 0,
+                                  y: node.y ?? 0,
+                              }))
+                        : [],
+            };
+            evt.target.setPointerCapture(evt.pointerId);
+        }
+
+        canvas.addEventListener("pointermove", (evt) => {
+            if (!state.dragging || !state.diagram) {
+                return;
+            }
+            const point = getPoint(evt);
+            const { kind, id, offsetX, offsetY } = state.dragging;
+            const item = kind === "node" ? getNodeById(id) : getSubgraphById(id);
+            if (!item) {
+                return;
+            }
+            const nextX = Math.round(point.x - offsetX);
+            const nextY = Math.round(point.y - offsetY);
+            const deltaX = nextX - (state.dragging.initialX ?? 0);
+            const deltaY = nextY - (state.dragging.initialY ?? 0);
+
+            item.x = nextX;
+            item.y = nextY;
+
+            if (kind === "subgraph") {
+                state.dragging.relatedSubgraphs.forEach((subgraphId) => {
+                    if (subgraphId === id) {
+                        return;
+                    }
+                    const child = getSubgraphById(subgraphId);
+                    if (child) {
+                        const original = state.dragging.relatedSubgraphsOriginal?.[subgraphId];
+                        if (original) {
+                            child.x = original.x + deltaX;
+                            child.y = original.y + deltaY;
+                        }
+                    }
+                });
+
+                state.dragging.relatedNodes.forEach((nodeState) => {
+                    const childNode = getNodeById(nodeState.id);
+                    if (childNode) {
+                        childNode.x = nodeState.x + deltaX;
+                        childNode.y = nodeState.y + deltaY;
+                    }
+                });
+            }
+            render();
+        });
+
+        canvas.addEventListener("pointerup", (evt) => {
+            if (!state.dragging) {
+                return;
+            }
+            state.dragging = null;
+            notifyStatus("布局已更新");
+            saveDiagram();
+        });
+
+        canvas.addEventListener("click", (evt) => {
+            if (evt.target === canvas) {
+                state.selected = null;
+                render();
+            }
+        });
+
+        function addNode() {
+            if (!state.diagram) {
+                return;
+            }
+            const nodeId = prompt("请输入节点 ID：", `node_${state.diagram.nodes.length + 1}`);
+            if (!nodeId) {
+                return;
+            }
+            if (getNodeById(nodeId)) {
+                alert("节点 ID 已存在。");
+                return;
+            }
+            const label = prompt("请输入节点显示文本：", nodeId) || nodeId;
+            const parentSubgraph =
+                state.selected && state.selected.kind === "subgraph"
+                    ? state.selected.id
+                    : null;
+            state.diagram.nodes.push({
+                node_id: nodeId,
+                label,
+                parent_subgraph: parentSubgraph,
+                x: 120 + state.diagram.nodes.length * 18,
+                y: 120 + state.diagram.nodes.length * 18,
+                width: 160,
+                height: 56,
+            });
+            selectItem("node", nodeId);
+            render();
+            saveDiagram();
+        }
+
+        function addSubgraph() {
+            if (!state.diagram) {
+                return;
+            }
+            const subgraphId = prompt(
+                "请输入子图 ID：",
+                `subgraph_${state.diagram.subgraphs.length + 1}`
+            );
+            if (!subgraphId) {
+                return;
+            }
+            if (getSubgraphById(subgraphId)) {
+                alert("子图 ID 已存在。");
+                return;
+            }
+            const title = prompt("请输入子图显示标题：", subgraphId) || subgraphId;
+            state.diagram.subgraphs.push({
+                subgraph_id: subgraphId,
+                title,
+                parent_subgraph:
+                    state.selected && state.selected.kind === "subgraph"
+                        ? state.selected.id
+                        : null,
+                direction: "TB",
+                x: 80 + state.diagram.subgraphs.length * 30,
+                y: 80 + state.diagram.subgraphs.length * 30,
+                width: 320,
+                height: 220,
+            });
+            selectItem("subgraph", subgraphId);
+            render();
+            saveDiagram();
+        }
+
+        function renameNode(nodeId) {
+            const node = getNodeById(nodeId);
+            if (!node) {
+                return;
+            }
+            const newId = prompt("修改节点 ID：", node.node_id);
+            if (!newId) {
+                return;
+            }
+            if (newId !== node.node_id && getNodeById(newId)) {
+                alert("新的节点 ID 已存在。");
+                return;
+            }
+            const newLabel = prompt("修改节点显示文本：", node.label || node.node_id);
+            state.diagram.edges.forEach((edge) => {
+                if (edge.source === node.node_id) {
+                    edge.source = newId;
+                }
+                if (edge.target === node.node_id) {
+                    edge.target = newId;
+                }
+            });
+            node.node_id = newId;
+            node.label = newLabel || newId;
+            selectItem("node", newId);
+            render();
+            saveDiagram();
+        }
+
+        function renameSubgraph(subgraphId) {
+            const subgraph = getSubgraphById(subgraphId);
+            if (!subgraph) {
+                return;
+            }
+            const newId = prompt("修改子图 ID：", subgraph.subgraph_id);
+            if (!newId) {
+                return;
+            }
+            if (newId !== subgraph.subgraph_id && getSubgraphById(newId)) {
+                alert("新的子图 ID 已存在。");
+                return;
+            }
+            const newTitle = prompt("修改子图显示标题：", subgraph.title);
+            state.diagram.nodes.forEach((node) => {
+                if (node.parent_subgraph === subgraph.subgraph_id) {
+                    node.parent_subgraph = newId;
+                }
+            });
+            state.diagram.subgraphs.forEach((item) => {
+                if (item.parent_subgraph === subgraph.subgraph_id) {
+                    item.parent_subgraph = newId;
+                }
+            });
+            subgraph.subgraph_id = newId;
+            subgraph.title = newTitle || newId;
+            selectItem("subgraph", newId);
+            render();
+            saveDiagram();
+        }
+
+        function renameSelected() {
+            if (!state.selected) {
+                return;
+            }
+            if (state.selected.kind === "node") {
+                renameNode(state.selected.id);
+            } else {
+                renameSubgraph(state.selected.id);
+            }
+        }
+
+        function deleteSelected() {
+            if (!state.selected || !state.diagram) {
+                return;
+            }
+            if (state.selected.kind === "node") {
+                state.diagram.nodes = state.diagram.nodes.filter(
+                    (node) => node.node_id !== state.selected.id
+                );
+                state.diagram.edges = state.diagram.edges.filter(
+                    (edge) =>
+                        edge.source !== state.selected.id &&
+                        edge.target !== state.selected.id
+                );
+            } else {
+                const toDelete = new Set([state.selected.id]);
+                let changed = true;
+                while (changed) {
+                    changed = false;
+                    state.diagram.subgraphs.forEach((subgraph) => {
+                        if (
+                            subgraph.parent_subgraph &&
+                            toDelete.has(subgraph.parent_subgraph) &&
+                            !toDelete.has(subgraph.subgraph_id)
+                        ) {
+                            toDelete.add(subgraph.subgraph_id);
+                            changed = true;
+                        }
+                    });
+                }
+                state.diagram.subgraphs = state.diagram.subgraphs.filter(
+                    (subgraph) => !toDelete.has(subgraph.subgraph_id)
+                );
+                const removedNodeIds = new Set(
+                    state.diagram.nodes
+                        .filter((node) => toDelete.has(node.parent_subgraph))
+                        .map((node) => node.node_id)
+                );
+                state.diagram.nodes = state.diagram.nodes.filter(
+                    (node) => !toDelete.has(node.parent_subgraph)
+                );
+                state.diagram.edges = state.diagram.edges.filter(
+                    (edge) =>
+                        !removedNodeIds.has(edge.source) &&
+                        !removedNodeIds.has(edge.target)
+                );
+            }
+            state.selected = null;
+            render();
+            saveDiagram();
+        }
+
+        document.getElementById("add-node").addEventListener("click", addNode);
+        document.getElementById("add-subgraph").addEventListener("click", addSubgraph);
+        document.getElementById("rename-item").addEventListener("click", renameSelected);
+        document.getElementById("delete-item").addEventListener("click", deleteSelected);
+        document.getElementById("save-diagram").addEventListener("click", saveDiagram);
+
+        window.loadDiagram = function loadDiagram(diagram) {
+            state.diagram = ensureDiagram(diagram);
+            state.selected = null;
+            state.dragging = null;
+            render();
+            notifyStatus(`已载入 ${state.diagram.diagram_id}`);
+        };
+    </script>
+</body>
+</html>
