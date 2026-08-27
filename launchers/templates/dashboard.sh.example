@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+set -eu
+
+if [ $# -lt 1 ]; then
+  echo "Usage: dashboard.sh <project_root>" >&2
+  exit 2
+fi
+
+PROJECT_ROOT="$1"
+PYTHON_EXE="${PYTHON_EXE:-python}"
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+PYTOOL_REPO="$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)"
+
+if [ ! -d "$PROJECT_ROOT" ]; then
+  echo "Project root not found: $PROJECT_ROOT" >&2
+  exit 3
+fi
+
+cd "$PROJECT_ROOT"
+"$PYTHON_EXE" "$PYTOOL_REPO/dashboard/src/ptd_dashboard/app/main.py" --project-root "$PROJECT_ROOT"

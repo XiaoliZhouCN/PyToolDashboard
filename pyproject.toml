@@ -1,0 +1,30 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["dashboard/src", "packages", "tools"]
+
+[tool.ruff.lint]
+select = [
+  "E",
+  "F",
+  "I",
+  "B",
+  "UP",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.pytooldashboard.git_commit_message]
+format = "[module][part] change summary[EN]: details[EN]"
+module_rule = "Use dashboard or a concrete tool id such as mermaid_editor."
+part_rule = "Use the primary first-level folder name such as app, actions, preview, domain, infra, docs, config, tests, or root."
+summary_rule = "English only. Prefer one short phrase and keep it within 5 words."
+details_rule = "English only. Prefer one sentence and keep it within 20 words."
+selection_rule = "If multiple modules are touched, choose the dominant module and part for the commit title."
