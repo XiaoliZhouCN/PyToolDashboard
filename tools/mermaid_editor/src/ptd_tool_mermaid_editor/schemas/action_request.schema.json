@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "record_type": "tool.action_request",
+  "description": "Arguments accepted by the Mermaid Editor action entrypoint.",
+  "type": "object",
+  "properties": {
+    "project_root": {
+      "type": "string"
+    },
+    "action_name": {
+      "type": "string"
+    },
+    "markdown_file": {
+      "type": "string"
+    },
+    "output_dir": {
+      "type": "string"
+    },
+    "diagram_id": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_root",
+    "action_name"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0",
+  "record_type": "tool.preview_response",
+  "description": "Preview response returned by the Mermaid Editor preview entrypoint.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "record_type": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "document_path": {
+          "type": "string"
+        },
+        "diagram_count": {
+          "type": "integer"
+        },
+        "diagrams": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "diagram_id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "chart_type": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string"
+              },
+              "node_count": {
+                "type": "integer"
+              },
+              "edge_count": {
+                "type": "integer"
+              },
+              "subgraph_count": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "diagram_id",
+              "title",
+              "chart_type",
+              "direction",
+              "node_count",
+              "edge_count",
+              "subgraph_count"
+            ]
+          }
+        }
+      },
+      "required": [
+        "record_type",
+        "created_at",
+        "document_path",
+        "diagram_count",
+        "diagrams"
+      ]
+    },
+    "artifacts": {
+      "type": "array"
+    },
+    "errors": {
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "request_id",
+    "status",
+    "message",
+    "payload",
+    "artifacts",
+    "errors"
+  ]
+}

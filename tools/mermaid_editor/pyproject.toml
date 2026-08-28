@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ptd-tool-mermaid-editor"
+version = "0.1.0"
+description = "Local-first Mermaid editor for Markdown knowledge bases."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "PySide6>=6.7,<7.0",
+]
+
+[project.scripts]
+ptd-mermaid-editor = "ptd_tool_mermaid_editor.app.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+ptd_tool_mermaid_editor = [
+  "app/static/*.html",
+  "schemas/*.json",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

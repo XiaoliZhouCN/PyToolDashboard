@@ -1,251 +1,346 @@
 # Mermaid Editor Architecture Design
 
-## 1. Current Goal
+## 1. Tool Goal
 
-Build and maintain a Mermaid note/editor tool in Python at:
+`mermaid_editor` 的目标是提供一个面向本地 Markdown 知识库的 Mermaid 图编辑器。
 
-- `/d:/Repositories/pytools/mermaid_editor`
+当前核心问题定义：
 
-Initial reference input:
+1. 从 Markdown 文件中提取 Mermaid 代码块
+2. 将 Mermaid 图渲染为可交互的可视化画布
+3. 支持节点和子图的手工布局，而不是只依赖 Mermaid 自动布局
+4. 支持基础结构编辑，并将结果回写到 Markdown 与 sidecar 布局文件
 
-- `/d:/Repositories/NexusRenderer/workflow.md`
-
-Core capabilities for the first milestone:
+当前明确关注的第一阶段能力：
 
-1. Read Mermaid source from Markdown files and render diagrams.
-2. Support manual layout editing instead of relying only on Mermaid auto-layout.
-3. Support manually adding subgraphs and nodes.
-4. Support editing node identifiers and display text.
+- 读取 Mermaid 源码并渲染
+- 拖拽布局节点和子图
+- 增删节点和子图
+- 编辑节点 ID、节点显示文本、子图 ID、子图标题
+- 支持边的基础交互编辑，包括拖拽式创建和属性面板修改
 
-Product positioning clarification:
+当前非目标：
 
-- local knowledge base tool
-- single-user / personal use
-- local-first, not collaboration-first
+- 多人协作编辑
+- 云端同步或远程服务依赖
+- 完整覆盖所有 Mermaid 图类型
+- 复杂权限系统、账号系统或在线发布能力
 
-## 2. Form Choice: Web App vs Window App
+## 2. Product Positioning
 
-### Option A: Frontend/Backend Web App
+该工具的产品定位是：
 
-#### Advantages
+- 本地优先的个人知识库工具
+- 单用户桌面编辑器
+- 更接近轻量 IDE / 图编辑器，而不是在线白板
 
-- Cross-platform delivery is convenient; browser is the runtime.
-- UI technology for graph editing is mature:
-  - `React`
-  - `Vue`
-  - `Svelte`
-  - `Konva`
-  - `SVG`
-  - `Canvas`
-  - `D3`
-- Future collaboration features are easier to extend:
-  - shared editing
-  - remote storage
-  - account system
-  - publishing/sharing
-- Frontend iteration speed is high for interactive diagram editing.
+这意味着设计优先级是：
 
-#### Disadvantages
+- 本地文件访问自然
+- 打开和保存流程直接
+- 支持离线运行
+- 保持 Python 作为主控语言
 
-- For a local note tool, backend is often unnecessary overhead.
-- Local file access, drag-drop desktop behavior, and offline packaging are more cumbersome.
-- If implemented as “Python backend + browser frontend”, the interaction core still largely lives in JavaScript; Python value is reduced to file service/API orchestration.
-- Desktop-style editing experience may need extra packaging later, such as Electron/Tauri/PWA.
+## 3. Architecture Options
 
-#### Best Fit
+### Option A: Frontend / Backend Web App
 
-- Multi-user collaboration is a priority.
-- Future target includes cloud sync and browser access.
-- The team is comfortable treating the editor as a web product first.
+优点：
 
-### Option B: Native Window Program
+- 交互式图编辑的前端技术成熟
+- 浏览器是天然运行时，跨平台交付方便
+- 后续如要做协作、云同步和分享，扩展路径更顺
 
-#### Advantages
+缺点：
 
-- Better match for a local engineering tool / note tool workflow.
-- Natural local file access:
-  - open Markdown
-  - save Markdown
-  - import/export assets
-  - manage local project folders
-- Easier offline usage and distribution as a single desktop app.
-- More suitable for future editor-class features:
-  - split panes
-  - dock widgets
-  - outline tree
-  - local history
-  - shortcut-heavy editing
-- Python can directly own application orchestration, parsing, persistence, and plugin management.
+- 对本地文件工作流并不天然友好
+- 如果采用“Python 后端 + 浏览器前端”，核心交互逻辑仍主要在 JavaScript
+- 为了获得桌面级体验，通常还需要额外桌面打包层
 
-#### Disadvantages
+适用前提：
 
-- If fully native-drawn UI is chosen, graph editing UI development cost rises sharply.
-- If later collaboration/cloud becomes core, a pure desktop-first architecture has more migration work.
-- Cross-platform UI consistency depends on the desktop framework.
+- 产品目标偏在线协作
+- 浏览器访问优先于本地桌面体验
 
-#### Best Fit
+### Option B: Native Desktop Window Program
 
-- Local-first Mermaid editing is the main target.
-- Manual layout editing is a core requirement.
-- The product is closer to an IDE/editor than a shared web whiteboard.
+优点：
 
-## 3. Recommendation
+- 更符合本地 Markdown 编辑和文件系统操作
+- 更适合后续扩展为真正的编辑器工具
+- Python 可以直接负责应用编排、解析、持久化和插件边界
 
-### Recommended Direction
+缺点：
 
-Choose a **window program**, but use a **hybrid architecture**:
+- 如果完全使用原生控件绘制交互画布，开发成本较高
+- 若未来转向协作型产品，迁移成本会更高
 
-- **Desktop shell**: `PySide6`
-- **Interactive editor surface**: HTML/CSS/JavaScript inside `QWebEngineView`
-- **Python side**:
-  - file IO
-  - Markdown / Mermaid parsing
-  - project state
-  - persistence
-  - export pipeline
-- **Web side**:
-  - canvas/SVG interaction
-  - drag layout
-  - selection
-  - node/subgraph editing
-  - visual feedback
+适用前提：
 
-This is the most balanced solution for the current target.
+- 本地优先
+- 单用户
+- 手工布局是核心能力
 
-Because the product is explicitly for **personal local knowledge management**, the desktop-first choice is no longer just a preference; it is the primary product fit.
+### Chosen Tradeoff
 
-## 4. Why This Recommendation Fits Best
+最终选择不是“纯原生 UI”，也不是“纯 Web 应用”，而是混合式桌面架构：
 
-The requested tool is not just a Mermaid viewer. It is becoming a **diagram editor** with:
+- 桌面壳使用 `PySide6`
+- 交互式画布使用 `QWebEngineView` 内嵌 HTML / CSS / JavaScript
 
-- manual positioning
-- structural editing
-- local Markdown integration
-- future note/tooling expansion
+这样既保留桌面端的本地文件能力，也保留 Web 技术对图编辑交互的高生产力。
 
-That combination is closer to:
+## 4. Final Decision
 
-- a lightweight IDE
-- a desktop diagram editor
+`mermaid_editor` 的最终架构决策是：
 
-than to a traditional browser webpage.
+**使用 `PySide6` 构建桌面应用外壳，在 `QWebEngineView` 中嵌入 Web 编辑画布。**
 
-At the same time, the editing surface itself is highly interactive and is best implemented with web rendering technology rather than trying to draw everything in pure Qt widgets.
+核心技术栈：
 
-So the recommended architecture is:
+- 桌面层：`PySide6`
+- 交互画布：HTML / CSS / JavaScript / SVG
+- Python 业务层：Markdown 解析、Mermaid 解析、布局持久化、运行入口
 
-**Desktop application outside, web editor inside.**
+选择理由：
 
-This keeps:
+1. 更符合本地 Markdown 编辑工具的产品边界
+2. 更适合手工布局、结构编辑和本地保存
+3. 保持 Python 作为主语言和主控层
+4. 为未来扩展 preview、dashboard 接入、导出和历史功能留出空间
 
-- Python as the main language and orchestration layer
-- high UI productivity for the graph editor
-- a clean future path for expansion
+## 5. Module Layout
 
-## 5. Extensibility Comparison
+当前真实目录结构对齐如下：
 
-### Web App Extensibility
+```text
+tools/mermaid_editor/
+├── architecture_design/
+├── samples/
+├── src/
+│   └── ptd_tool_mermaid_editor/
+│       ├── actions/
+│       ├── app/
+│       ├── domain/
+│       ├── infra/
+│       ├── preview/
+│       └── schemas/
+├── tests/
+├── pyproject.toml
+├── run.py
+└── tool.json
+```
 
-Strong in:
+各层职责如下：
 
-- collaboration
-- cloud storage
-- share links
-- online publishing
-- team workflows
+### `actions/`
 
-Weaker in:
+- 面向 dashboard 或脚本调度的标准 action
+- 当前提供 `export_svg`、`export_png`
 
-- deep local integration
-- local-first engineering workflows
-- desktop-grade file/project operations
+约束：
 
-### Window App Extensibility
+- 可以依赖 `domain/` 和 `infra/`
+- 返回值应符合标准 action response 结构
 
-Strong in:
+### `app/`
 
-- local note/database integration
-- project-based workflows
-- plugin systems
-- keyboard-driven editor features
-- file watching
-- export/import tools
+- CLI 入口
+- `MainWindow`
+- Qt 与 Web 画布之间的桥接
+- 资源页面加载
 
-Weaker in:
+约束：
 
-- instant browser access
-- zero-install usage
-- real-time collaboration out of the box
+- 可以依赖 `domain/`、`infra/`、`preview/`
+- 不承载核心 Mermaid 业务规则
 
-## 6. Final Architecture Decision
+### `domain/`
 
-### Decision
+- 图模型
+- 图结构编辑规则
+- Mermaid 解析与序列化
+- 默认布局分配
 
-For `mermaid_editor`, the preferred implementation is:
+约束：
 
-**Python desktop application based on `PySide6`, with an embedded web editor for the diagram canvas.**
+- 不直接依赖 Qt UI
+- 不承担文件系统 I/O
 
-### Decision Rationale
+### `infra/`
 
-1. Better fit for local Markdown note editing.
-2. Better fit for manual graph layout interactions.
-3. Better long-term path for becoming a serious editor tool.
-4. Keeps Python as the primary project language.
-5. Allows future extraction of the editor surface into a standalone web frontend if needed.
-6. Avoids unnecessary backend and collaboration complexity for a single-user product.
+- Markdown 文件读取
+- sidecar 布局 JSON 读写
 
-## 7. Suggested Technical Direction
+约束：
 
-### Desktop Layer
+- 承担外部 I/O
+- 不直接操作桌面 UI
 
-- `PySide6`
-- `QMainWindow`
-- `QSplitter`
-- `QTreeWidget` or `QListWidget`
-- `QPlainTextEdit`
-- `QWebEngineView`
+### `preview/`
 
-### Python Core
+- 面向 dashboard 的摘要预览构建
 
-- Mermaid block extraction from Markdown
-- document model
-- graph model
-- manual layout persistence
-- import/export
-- autosave / project save
+### `schemas/`
 
-### Web Editor Layer
+- tool 输入输出 schema
 
-- SVG-based or Canvas-based node rendering
-- drag-and-drop positioning
-- subgraph box editing
-- node text editing
-- selection / hover / context menu
+### Dependency Boundaries
+
+允许依赖方向：
+
+```text
+app -> domain
+app -> infra
+app -> preview
+preview -> infra
+preview -> domain
+infra -> domain
+```
+
+不允许：
+
+- `domain/` 依赖 Qt 或 Web UI
+- tool 直接依赖 dashboard 内部实现
+
+## 6. Data And Persistence
+
+### Inputs
+
+主要输入：
+
+1. Markdown 文件
+2. 与 Markdown 相邻的布局 sidecar 文件：`<markdown_file>.layout.json`
+
+Markdown 中的 Mermaid 代码块仍然是结构真源。
+
+### Outputs
+
+主要输出：
+
+1. 回写后的原始 Markdown 文件
+2. 保存布局元数据的 sidecar JSON
+3. preview 命令输出的标准 JSON 响应
+4. action 命令输出的导出 artifact，如 SVG / PNG
 
 ### Persistence Strategy
 
-Recommended to store:
+持久化策略如下：
 
-1. original Mermaid text
-2. editor metadata for manual layout
+- Mermaid 结构文本保留在 Markdown 中
+- 手工布局保存在 sidecar JSON 中
 
-Example direction:
+这样做的原因是：
 
-- keep Mermaid source in Markdown
-- store manual layout metadata in sidecar JSON, or
-- embed editor metadata in fenced comment blocks
+- Mermaid 原文保持可读、可编辑
+- 手工布局信息不会因为 Mermaid 重新解析而丢失
 
-This prevents manual layout data from being lost when Mermaid syntax is reloaded.
+### Data Format Rules
 
-For this project, persistence should be optimized for local personal workflows:
+- JSON 使用 `UTF-8`
+- key 使用 `snake_case`
+- sidecar 顶层带 `schema_version`
 
-- fast local open/save
-- robust autosave
-- recoverable history
-- no mandatory remote dependency
-- optional future export/sync, but not a core requirement
+当前 sidecar 只保存布局坐标与子图尺寸，没有引入复杂迁移逻辑。
 
-## 8. Milestone Suggestion
+## 7. Runtime And Integration
+
+### CLI Entrypoints
+
+当前提供两个主要入口：
+
+- `python run.py launch`
+- `python run.py preview`
+- `python run.py action`
+
+它们都支持显式传入 `--project-root`。
+
+### Workspace Runtime Rule
+
+必须区分两个根目录：
+
+- tool 源码根目录：`tools/mermaid_editor/`
+- 主体项目目录：`project_root`
+
+运行时要求：
+
+- launcher 必须先切换到 `project_root`
+- Python 入口必须显式接收 `--project-root`
+- 文件对话框与相对路径解析以 `project_root` 为基准
+
+### Dashboard Integration
+
+当前 `tool.json` 已声明：
+
+- `launch`
+- `preview`
+- `action`
+- `launcher_policy = standalone_allowed`
+
+这意味着它既可以被 dashboard 调用，也允许提供独立 launcher。
+
+### Standalone Launcher Decision
+
+`mermaid_editor` 适合独立启动，原因是：
+
+- 它本身就是明确的单用途桌面工具
+- 不依赖 dashboard 的上文选择状态才能运行
+- 输入边界清楚，主要就是 `project_root` 和可选的 Markdown 文件
+
+因此仓库级 `launchers/` 中维护：
+
+- `tool_mermaid_editor.bat`
+- `tool_mermaid_editor.sh`
+
+launcher 负责：
+
+1. 校验 `project_root`
+2. 切换 `cwd` 到 `project_root`
+3. 显式传入 `--project-root`
+4. 将其余参数透传给 tool CLI
+
+### Action Strategy
+
+当前标准 action 包括：
+
+- `export_svg`
+- `export_png`
+
+共同输入：
+
+- Markdown 文件
+- 可选 `diagram_id`
+- 可选输出目录
+
+共同输出：
+
+- 标准 JSON 响应
+- artifact 列表
+
+当前导出策略：
+
+- 从本地图模型统一生成导出表达
+- `export_svg` 直接写出 SVG
+- `export_png` 使用 `QPainter` 直接从图模型光栅化成 PNG
+
+它的目标是先提供一个稳定、可自动化调用的导出能力，为 dashboard 集成和批处理场景打基础。
+
+## 8. Constraints And Risks
+
+当前明确限制：
+
+- Mermaid 解析器主要覆盖 `flowchart` 子集
+- 当前边编辑已支持拖拽式创建和基础样式切换，但箭头方向等更细粒度样式仍未完成
+- 当前没有撤销/重做
+- 当前 PNG 导出还不是浏览器画布级别的高保真截图
+
+当前已知风险：
+
+- Web 画布的交互复杂度继续上升后，需要更明确的前后端状态同步策略
+- 如果后续支持更多 Mermaid 语法，现有解析器需要继续扩展或替换
+- 桌面端与嵌入式 Web UI 的边界若不持续收紧，未来容易出现状态耦合
+
+## 9. Milestones Or Evolution Plan
 
 ### M1
 
@@ -253,11 +348,15 @@ For this project, persistence should be optimized for local personal workflows:
 - extract Mermaid blocks
 - render current diagram
 
+状态：已完成
+
 ### M2
 
 - select node
 - drag node position
 - save manual layout metadata
+
+状态：已完成
 
 ### M3
 
@@ -266,11 +365,14 @@ For this project, persistence should be optimized for local personal workflows:
 - edit node display text
 - add/delete subgraph
 
+状态：已完成
+
 ### M4
 
-- bidirectional sync:
-  - visual edits -> Mermaid text
-  - Mermaid text edits -> visual model
+- visual edits -> Mermaid text
+- Mermaid text edits -> visual model
+
+状态：较为完整，但仍缺撤销重做和更强的边交互
 
 ### M5
 
@@ -278,13 +380,34 @@ For this project, persistence should be optimized for local personal workflows:
 - multi-diagram document support
 - outline / diagram navigator
 
-## 9. Immediate Next Step
+状态：部分完成
 
-Proceed with a desktop-first implementation skeleton:
+## 10. Status Update
 
-1. create project structure
-2. build a PySide6 main window
-3. load `/d:/Repositories/NexusRenderer/workflow.md`
-4. extract Mermaid code blocks
-5. render them in an embedded web view
-6. design manual layout data model
+当前实现已经从早期原型推进到符合仓库标准骨架的形态。
+
+已落地的关键调整：
+
+1. 根目录补齐 `pyproject.toml`、`tool.json` 和标准 README
+2. 源码迁移到 `src/ptd_tool_mermaid_editor/`
+3. 以 `app / domain / infra / preview / schemas` 分层组织
+4. 用本地 `samples/` 取代过时的外部硬编码示例路径
+5. 明确拆分 tool 源码根目录与运行时 `project_root`
+6. 增加独立 launcher，允许不经 dashboard 直接启动
+7. 增加标准 action，并支持 `export_svg`、`export_png`
+8. 增加 domain 层图结构编辑服务，使节点/子图编辑具备一致规则和测试覆盖
+9. 增加画布属性面板、右键菜单、拖拽式边创建、画布缩放和平移交互
+10. 修复边引用已有子图时被错误解析为顶层节点的问题
+11. 在 v0.1.2 中将详情编辑面板移出画布覆盖层，并加入多选、框选、对齐、中心缩放与锚点侧向偏好
+
+当前已经落地的设计决策：
+
+- 桌面壳 + Web 画布的混合架构
+- Markdown 为结构真源，sidecar JSON 保存布局
+- 允许 dashboard 调用，也允许独立运行
+
+当前仍属于后续演进项的内容：
+
+- 更完整的 preview / action 能力
+- 更强的 Mermaid 语法兼容
+- 更完整的编辑器能力，如撤销重做、更细的边样式控制、高保真导出和历史管理

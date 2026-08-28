@@ -33,7 +33,7 @@ launchers/
 
 统一要求：
 
-1. launcher 必须接收主体项目根目录，或从调用方显式推导出主体项目根目录
+1. launcher 必须接收主体项目根目录，或在无参数时默认使用**当前工作目录**作为主体项目根目录
 2. 在调用 Python 前，先切换到主体项目根目录
 3. Python 入口应同时接收明确的 `--project-root` 参数，避免只依赖当前工作目录
 4. 所有相对路径解析、缓存落点和临时产物应基于 `project_root`
@@ -48,12 +48,21 @@ launchers/
 
 每个 launcher 至少应完成以下动作：
 
-1. 校验主体项目目录是否存在
-2. 解析 PyToolDashboard 仓库路径
-3. 切换到主体项目目录
-4. 调用目标 Python 入口
-5. 显式传递 `--project-root`
-6. 保留原始退出码
+1. 在脚本头部写明参数注释
+2. 支持无参数直接运行
+3. 校验主体项目目录是否存在
+4. 解析 PyToolDashboard 仓库路径
+5. 切换到主体项目目录
+6. 调用目标 Python 入口
+7. 显式传递 `--project-root`
+8. 保留原始退出码
+
+脚本头部参数注释至少要说明：
+
+- 脚本用途
+- 参数列表
+- 无参数时的默认行为
+- 可选环境变量，例如 `PYTHON_EXE`
 
 推荐附加能力：
 
@@ -101,10 +110,16 @@ launchers/
 推荐命令风格：
 
 ```text
-dashboard.bat <project_root>
-dashboard.sh <project_root>
-tool_mermaid_editor.bat <project_root> [extra_args...]
+dashboard.bat [project_root]
+dashboard.sh [project_root]
+tool_mermaid_editor.bat [project_root] [extra_args...]
 ```
+
+默认行为：
+
+- 若 `project_root` 省略，则使用启动脚本时的当前工作目录
+- 若 tool 还需要额外参数，建议显式传入 `.` 作为 `project_root`，例如：
+  - `tool_mermaid_editor.bat . preview`
 
 ## 9. 与 scripts/ 的边界
 

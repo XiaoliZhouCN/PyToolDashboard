@@ -8,6 +8,7 @@
 - 切换到主体项目目录作为运行时 `cwd`
 - 调用 dashboard 或允许独立运行的 tool
 - 显式传递 `--project-root`
+- 支持无参数直接运行，默认使用当前工作目录作为 `project_root`
 
 边界：
 
@@ -19,3 +20,13 @@
 
 - `templates/dashboard.bat.example`
 - `templates/dashboard.sh.example`
+
+当前已维护的独立 launcher：
+
+- `tool_mermaid_editor.bat`
+- `tool_mermaid_editor.sh`
+
+脚本要求：
+
+- 脚本头部必须写清参数注释
+- 若省略 `project_root`，脚本应默认使用当前工作目录

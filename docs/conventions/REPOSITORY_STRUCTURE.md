@@ -36,6 +36,8 @@ dashboard/
 ```text
 tools/<tool_id>/
 ├── README.md
+├── architecture_design/
+│   └── ARCHITECTURE_DESIGN.md
 ├── pyproject.toml
 ├── tool.json
 ├── src/ptd_tool_<tool_id>/
@@ -55,6 +57,7 @@ tools/<tool_id>/
 - `domain/` 不直接依赖 UI。
 - `actions/` 暴露给 dashboard 的能力必须细粒度、可文档化、可测试。
 - `samples/` 只放可公开示例，不放真实业务数据。
+- `architecture_design/ARCHITECTURE_DESIGN.md` 用于记录复杂 tool 的架构决策；简单 tool 可暂不提供，但推荐预留该位置。
 
 ## 4. packages 目录建议
 

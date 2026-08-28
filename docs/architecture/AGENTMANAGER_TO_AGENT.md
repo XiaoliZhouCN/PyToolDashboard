@@ -92,6 +92,8 @@
   [docs/contracts/TOOL_RUNTIME_CONTRACT.md](file:///d:/Repositories/PyToolDashboard/docs/contracts/TOOL_RUNTIME_CONTRACT.md)
 - 编写 README 或架构文档时：
   [docs/conventions/DOCUMENTATION.md](file:///d:/Repositories/PyToolDashboard/docs/conventions/DOCUMENTATION.md)
+- 编写或更新单个 tool 的架构设计文档时：
+  [docs/conventions/ARCHITECTURE_DESIGN.md](file:///d:/Repositories/PyToolDashboard/docs/conventions/ARCHITECTURE_DESIGN.md)
 - 修改运行脚本、缓存/产物、退出码、日志行为时：
   [docs/conventions/OPERATIONS.md](file:///d:/Repositories/PyToolDashboard/docs/conventions/OPERATIONS.md)
 - 被要求生成 commit message 或执行提交时：
@@ -105,6 +107,8 @@
   在上面的基础上，加读 `DATA_FORMATS.md`
 - 要让 tool 接入 dashboard：
   在上面的基础上，加读 `TOOL_RUNTIME_CONTRACT.md`
+- 要为复杂 tool 新建或维护 `ARCHITECTURE_DESIGN.md`：
+  在上面的基础上，加读 `ARCHITECTURE_DESIGN.md`
 
 ## 5. 仓库分析 Agent
 
@@ -183,6 +187,8 @@
   [docs/conventions/LAUNCHERS.md](file:///d:/Repositories/PyToolDashboard/docs/conventions/LAUNCHERS.md)
 - 若文档涉及工具接入协议：
   [docs/contracts/TOOL_RUNTIME_CONTRACT.md](file:///d:/Repositories/PyToolDashboard/docs/contracts/TOOL_RUNTIME_CONTRACT.md)
+- 若文档是某个 tool 的架构设计记录：
+  [docs/conventions/ARCHITECTURE_DESIGN.md](file:///d:/Repositories/PyToolDashboard/docs/conventions/ARCHITECTURE_DESIGN.md)
 
 ## 8. 读取决策表
 
@@ -191,6 +197,7 @@
 | 要写 JSON 文件 | `DATA_FORMATS.md` |
 | 要写 CSV 文件 | `DATA_FORMATS.md` |
 | 要写 `tool.json` | `TOOL_RUNTIME_CONTRACT.md` |
+| 要写 `ARCHITECTURE_DESIGN.md` | `ARCHITECTURE_DESIGN.md` |
 | 要加 launcher / bat / sh | `LAUNCHERS.md` + `OPERATIONS.md` |
 | 要加新依赖 | `DEPENDENCIES.md` |
 | 要写 README | `DOCUMENTATION.md` |

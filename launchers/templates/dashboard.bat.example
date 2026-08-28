@@ -1,12 +1,19 @@
 @echo off
 setlocal
+rem Dashboard launcher template.
+rem Args:
+rem   1) project_root (optional): target project root. Defaults to current working directory.
+rem Behavior:
+rem   - No args: run against current working directory.
+rem Env:
+rem   - PYTHON_EXE (optional): Python executable path. Default is "python".
 
 if "%~1"=="" (
-  echo Usage: dashboard.bat ^<project_root^>
-  exit /b 2
+  set "PROJECT_ROOT=%CD%"
+) else (
+  set "PROJECT_ROOT=%~1"
 )
 
-set "PROJECT_ROOT=%~1"
 set "PYTHON_EXE=python"
 set "SCRIPT_DIR=%~dp0"
 

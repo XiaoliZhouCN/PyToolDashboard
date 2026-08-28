@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "tool_id": "mermaid_editor",
+  "name": "Mermaid Editor",
+  "version": "0.1.0",
+  "entrypoints": {
+    "launch": "python run.py launch",
+    "preview": "python run.py preview",
+    "action": "python run.py action"
+  },
+  "capabilities": [
+    "launch_panel",
+    "preview",
+    "run_action"
+  ],
+  "launcher_policy": "standalone_allowed",
+  "input_schema": "src/ptd_tool_mermaid_editor/schemas/action_request.schema.json",
+  "output_schema": "src/ptd_tool_mermaid_editor/schemas/action_response.schema.json"
+}

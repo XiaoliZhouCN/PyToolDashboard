@@ -3,7 +3,7 @@ alwaysApply: true
 scene: git_message
 ---
 
-本仓库的 git commit message 必须遵循以下格式：
+本仓库的 git commit message 必须用英文书写，必须遵循以下格式：
 
 `[XX][XX] change summary[EN]: details[EN]`
 
