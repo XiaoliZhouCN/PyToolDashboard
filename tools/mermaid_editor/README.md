@@ -21,6 +21,8 @@
 
 ```text
 mermaid_editor/
+├── to_agent/
+│   └── AGENT_TASK_DISPATCH.md
 ├── architecture_design/
 │   └── ARCHITECTURE_DESIGN.md
 ├── samples/
@@ -39,6 +41,7 @@ mermaid_editor/
 │       │   └── svg_export.py
 │       ├── domain/
 │       │   ├── graph.py
+│       │   ├── diagram_editor.py
 │       │   └── mermaid_parser.py
 │       ├── infra/
 │       │   ├── layout_store.py
@@ -172,6 +175,20 @@ python run.py action --project-root . --action-name export_png --markdown-file s
 
 - 当前解析器主要覆盖 `flowchart` 子集
 - 当前边编辑已支持基础增删改，但还不是完整的可视化连线交互
-- 当前未实现撤销/重做、自动历史快照
+- 当前已提供基础 `Ctrl+Z` 撤销，但还没有重做，也还没有系统化历史快照管理
 - preview 入口目前只输出摘要，不返回完整图模型
 - `export_svg` 和 `export_png` 当前输出的是基于本地图模型的简化导出，而不是浏览器画布的逐像素还原
+
+## Handoff Docs
+
+若后续由新的 AI / Agent 接手开发，建议优先阅读以下文档：
+
+1. [architecture_design/ARCHITECTURE_DESIGN.md](file:///d:/Repositories/PyToolDashboard/tools/mermaid_editor/architecture_design/ARCHITECTURE_DESIGN.md)
+2. [architecture_design/FEATURES_AND_USAGE.md](file:///d:/Repositories/PyToolDashboard/tools/mermaid_editor/architecture_design/FEATURES_AND_USAGE.md)
+3. [to_agent/AGENT_TASK_DISPATCH.md](file:///d:/Repositories/PyToolDashboard/tools/mermaid_editor/to_agent/AGENT_TASK_DISPATCH.md)
+
+其中：
+
+- `ARCHITECTURE_DESIGN.md` 说明当前实现边界、限制与风险
+- `FEATURES_AND_USAGE.md` 说明当前功能状态与体验反馈处理进度
+- `AGENT_TASK_DISPATCH.md` 用于多 Agent 协作、任务分发与交接回复

@@ -20,6 +20,7 @@
             --subgraph: rgba(56, 189, 248, 0.12);
             --node: #0f172a;
             --edge: #a5b4fc;
+            --toolbar-height: 72px;
         }
 
         * { box-sizing: border-box; }
@@ -39,26 +40,47 @@
 
         .shell {
             display: grid;
-            grid-template-rows: 48px 1fr;
+            grid-template-rows: var(--toolbar-height) 1fr;
             height: 100vh;
+        }
+
+        .toolbar-shell {
+            display: grid;
+            grid-template-rows: 1fr 6px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            min-height: 64px;
         }
 
         .toolbar {
             display: flex;
-            align-items: center;
+            align-items: stretch;
+            align-content: stretch;
+            justify-content: stretch;
+            flex-wrap: nowrap;
             gap: 8px;
             padding: 8px 12px;
-            background: var(--panel);
-            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            overflow-y: hidden;
         }
 
         .toolbar button {
             border: 1px solid var(--border);
             background: var(--panel-2);
             color: var(--text);
-            padding: 6px 10px;
+            padding: 4px 8px;
             border-radius: 6px;
             cursor: pointer;
+            min-width: 92px;
+            height: 100%;
+            flex: 1 1 0;
+            white-space: nowrap;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            line-height: 1.15;
         }
 
         .toolbar button.active,
@@ -66,10 +88,31 @@
             border-color: var(--accent);
         }
 
+        .toolbar button .tool-label {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .toolbar button .tool-shortcut {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
         .toolbar .spacer { flex: 1; }
         .toolbar .hint {
+            display: inline-flex;
+            align-items: center;
             color: var(--muted);
             font-size: 12px;
+            line-height: 1.4;
+            white-space: nowrap;
+            flex: 0 0 auto;
+        }
+
+        .toolbar-resizer {
+            border-top: 1px solid var(--border);
+            background: linear-gradient(180deg, var(--panel-2), var(--panel-3));
+            cursor: row-resize;
         }
 
         .canvas-shell {
@@ -98,6 +141,7 @@
             stroke-width: 1.5;
             rx: 12;
             ry: 12;
+            cursor: move;
         }
 
         .subgraph.selected,
@@ -139,18 +183,14 @@
 
         .edge {
             stroke: var(--edge);
-            stroke-width: 2;
             fill: none;
-            marker-end: url(#arrowhead);
             cursor: pointer;
         }
 
-        .edge.thick { stroke-width: 3; }
         .edge.dotted { stroke-dasharray: 7 5; }
         .edge.plain { marker-end: none; }
         .edge.selected {
             stroke: var(--accent-2);
-            stroke-width: 3.5;
         }
 
         .edge-label {
@@ -287,28 +327,31 @@
 </head>
 <body>
     <div class="shell">
-        <div class="toolbar">
-            <button type="button" id="add-node">Add Node</button>
-            <button type="button" id="add-edge">Add Edge</button>
-            <button type="button" id="add-subgraph">Add Subgraph</button>
-            <button type="button" id="rename-item">Rename</button>
-            <button type="button" id="delete-item">Delete</button>
-            <button type="button" id="fit-selected">Fit Selected</button>
-            <button type="button" id="zoom-out">-</button>
-            <button type="button" id="zoom-reset">50%</button>
-            <button type="button" id="zoom-in">+</button>
-            <button type="button" id="save-diagram">Save Layout</button>
-            <div class="spacer"></div>
-            <span class="hint">v0.1.2: 中心缩放、Ctrl 多选/框选、Ctrl+Q/W 对齐、Ctrl+H 视图归位。</span>
+        <div class="toolbar-shell" id="toolbar-shell">
+            <div class="toolbar">
+                <button type="button" id="add-node"><span class="tool-label">Add Node</span><span class="tool-shortcut">Double Click</span></button>
+                <button type="button" id="add-edge"><span class="tool-label">Add Edge</span><span class="tool-shortcut">Esc Cancel</span></button>
+                <button type="button" id="add-subgraph"><span class="tool-label">Add Subgraph</span><span class="tool-shortcut">Context Menu</span></button>
+                <button type="button" id="rename-item"><span class="tool-label">Rename</span><span class="tool-shortcut">Inspector</span></button>
+                <button type="button" id="delete-item"><span class="tool-label">Delete</span><span class="tool-shortcut">Del</span></button>
+                <button type="button" id="fit-selected"><span class="tool-label">Fit Selected</span><span class="tool-shortcut">Ctrl+T</span></button>
+                <button type="button" id="zoom-out"><span class="tool-label">Zoom Out</span><span class="tool-shortcut">Ctrl+Wheel</span></button>
+                <button type="button" id="zoom-reset"><span class="tool-label">50%</span><span class="tool-shortcut">Ctrl+H</span></button>
+                <button type="button" id="zoom-in"><span class="tool-label">Zoom In</span><span class="tool-shortcut">Ctrl+Wheel</span></button>
+                <button type="button" id="save-diagram"><span class="tool-label">Save Layout</span><span class="tool-shortcut">Auto Save</span></button>
+                <div class="spacer"></div>
+                <span class="hint">v0.1.3: Ctrl 多选/框选修复、Ctrl+Q/W 对齐、Ctrl+T 适配子图、Ctrl+H 视图归位。</span>
+            </div>
+            <div class="toolbar-resizer" id="toolbar-resizer" title="拖动调整工具栏高度"></div>
         </div>
         <div class="canvas-shell" id="canvas-shell">
             <svg id="canvas" viewBox="0 0 2200 1400" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                        <path d="M 0 0 L 8 4 L 0 8 z" fill="#a5b4fc"></path>
+                    <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+                        <path d="M 0 0 L 8 4 L 0 8 z" fill="#a5b4fc" stroke="none"></path>
                     </marker>
-                    <marker id="draft-arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                        <path d="M 0 0 L 8 4 L 0 8 z" fill="#f59e0b"></path>
+                    <marker id="draft-arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+                        <path d="M 0 0 L 8 4 L 0 8 z" fill="#f59e0b" stroke="none"></path>
                     </marker>
                 </defs>
                 <g id="viewport">
@@ -353,8 +396,16 @@
             panning: null,
             edgeDraft: null,
             marquee: null,
+            suppressCanvasClick: false,
+            toolbarResize: null,
             dialog: null,
             pointerWorld: { x: 0, y: 0 },
+            history: {
+                undoStack: [],
+                redoStack: [],
+                maxEntries: 60,
+            },
+            layoutDirty: false,
             view: {
                 scale: 0.5,
                 offsetX: 0,
@@ -364,6 +415,9 @@
 
         let bridge = null;
 
+        const rootStyle = document.documentElement.style;
+        const toolbarShell = document.getElementById("toolbar-shell");
+        const toolbarResizer = document.getElementById("toolbar-resizer");
         const canvasShell = document.getElementById("canvas-shell");
         const canvas = document.getElementById("canvas");
         const viewport = document.getElementById("viewport");
@@ -407,6 +461,74 @@
             if (bridge && state.diagram) {
                 bridge.saveDiagram(JSON.stringify(state.diagram));
             }
+        }
+
+        function snapshotDiagram() {
+            return state.diagram ? JSON.stringify(state.diagram) : "";
+        }
+
+        function recordHistory() {
+            const snapshot = snapshotDiagram();
+            pushHistorySnapshot(snapshot);
+        }
+
+        function pushHistorySnapshot(snapshot) {
+            if (!snapshot) {
+                return;
+            }
+            const undoStack = state.history.undoStack;
+            if (undoStack.length && undoStack[undoStack.length - 1] === snapshot) {
+                return;
+            }
+            undoStack.push(snapshot);
+            if (undoStack.length > state.history.maxEntries) {
+                undoStack.shift();
+            }
+            state.history.redoStack = [];
+        }
+
+        function commitMutation(mutator) {
+            const before = snapshotDiagram();
+            if (!before) {
+                return false;
+            }
+            const result = mutator();
+            if (result === false) {
+                return false;
+            }
+            const after = snapshotDiagram();
+            if (before === after) {
+                return false;
+            }
+            state.layoutDirty = true;
+            pushHistorySnapshot(before);
+            return true;
+        }
+
+        function replaceDiagramFromSnapshot(snapshot) {
+            state.diagram = JSON.parse(snapshot);
+            state.layoutDirty = false;
+            clearSelection();
+            render();
+            saveDiagram();
+        }
+
+        function undoDiagramChange() {
+            if (!state.history.undoStack.length || !state.diagram) {
+                return;
+            }
+            const current = snapshotDiagram();
+            const previous = state.history.undoStack.pop();
+            if (current) {
+                state.history.redoStack.push(current);
+            }
+            replaceDiagramFromSnapshot(previous);
+            notifyStatus("已撤回一步");
+        }
+
+        function setToolbarHeight(nextHeight) {
+            const clampedHeight = Math.max(64, Math.min(180, Math.round(nextHeight)));
+            rootStyle.setProperty("--toolbar-height", `${clampedHeight}px`);
         }
 
         function getNodeById(nodeId) {
@@ -570,6 +692,22 @@
             };
         }
 
+        function getEdgeStrokeWidth(style, selected) {
+            const baseWidth = style === "thick" ? 4.75 : 2;
+            return selected ? baseWidth + 1 : baseWidth;
+        }
+
+        function applyEdgePresentation(line, style, selected) {
+            const edgeStyle = style || "solid";
+            line.classList.add("edge");
+            line.classList.toggle("thick", edgeStyle === "thick");
+            line.classList.toggle("dotted", edgeStyle === "dotted");
+            line.classList.toggle("plain", edgeStyle === "plain");
+            line.classList.toggle("selected", selected);
+            line.style.strokeWidth = String(getEdgeStrokeWidth(edgeStyle, selected));
+            line.style.markerEnd = edgeStyle === "plain" ? "none" : "url(#arrowhead)";
+        }
+
         function syncSelectionToQt() {
             if (bridge) {
                 bridge.selectionChanged(JSON.stringify(buildSelectionPayload()));
@@ -610,23 +748,49 @@
             });
         }
 
+        function createSvgPoint(clientX, clientY) {
+            const point = canvas.createSVGPoint();
+            point.x = clientX;
+            point.y = clientY;
+            return point;
+        }
+
+        function screenToCanvas(clientX, clientY) {
+            const matrix = canvas.getScreenCTM();
+            if (!matrix) {
+                return { x: 0, y: 0 };
+            }
+            const point = createSvgPoint(clientX, clientY).matrixTransform(matrix.inverse());
+            return { x: point.x, y: point.y };
+        }
+
+        function screenToWorld(clientX, clientY) {
+            const matrix = viewport.getScreenCTM();
+            if (!matrix) {
+                return screenToCanvas(clientX, clientY);
+            }
+            const point = createSvgPoint(clientX, clientY).matrixTransform(matrix.inverse());
+            return { x: point.x, y: point.y };
+        }
+
         function getCanvasCenterScreen() {
             const rect = canvas.getBoundingClientRect();
-            return {
-                x: rect.width / 2,
-                y: rect.height / 2,
-            };
+            return screenToCanvas(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        }
+
+        function isCanvasBackgroundTarget(target) {
+            return (
+                target === canvas ||
+                target === viewport ||
+                target === subgraphsLayer ||
+                target === edgesLayer ||
+                target === nodesLayer ||
+                target === overlayLayer
+            );
         }
 
         function getPoint(evt) {
-            const point = canvas.createSVGPoint();
-            point.x = evt.clientX;
-            point.y = evt.clientY;
-            const base = point.matrixTransform(canvas.getScreenCTM().inverse());
-            return {
-                x: (base.x - state.view.offsetX) / state.view.scale,
-                y: (base.y - state.view.offsetY) / state.view.scale,
-            };
+            return screenToWorld(evt.clientX, evt.clientY);
         }
 
         function clampScale(scale) {
@@ -640,7 +804,11 @@
             );
             const label = `${Math.round(state.view.scale * 100)}%`;
             viewChip.textContent = label;
-            document.getElementById("zoom-reset").textContent = label;
+            const zoomResetButton = document.getElementById("zoom-reset");
+            const zoomResetLabel = zoomResetButton.querySelector(".tool-label");
+            if (zoomResetLabel) {
+                zoomResetLabel.textContent = label;
+            }
         }
 
         function setView(scale, worldCenter = null) {
@@ -929,10 +1097,24 @@
             if (!subgraph || !bounds) {
                 return;
             }
-            subgraph.x = bounds.x;
-            subgraph.y = bounds.y;
-            subgraph.width = Math.max(bounds.width, 220);
-            subgraph.height = Math.max(bounds.height, 140);
+            const descendantIds = getDescendantSubgraphIds(subgraphId);
+            const hasContents =
+                state.diagram.nodes.some((node) => descendantIds.has(node.parent_subgraph)) ||
+                state.diagram.subgraphs.some((item) => item.subgraph_id !== subgraphId && descendantIds.has(item.parent_subgraph));
+            const changed = commitMutation(() => {
+                if (!hasContents) {
+                    subgraph.width = 160;
+                    subgraph.height = 56;
+                    return;
+                }
+                subgraph.x = bounds.x;
+                subgraph.y = bounds.y;
+                subgraph.width = Math.max(bounds.width, 220);
+                subgraph.height = Math.max(bounds.height, 140);
+            });
+            if (!changed) {
+                return;
+            }
             render();
             saveDiagram();
             notifyStatus("子图尺寸已适配内容");
@@ -947,10 +1129,13 @@
             nodesLayer.innerHTML = "";
             overlayLayer.innerHTML = "";
 
-            state.diagram.subgraphs
-                .slice()
-                .sort((a, b) => getSubgraphDepth(b.subgraph_id) - getSubgraphDepth(a.subgraph_id))
-                .forEach((subgraph) => expandSubgraphToContents(subgraph.subgraph_id));
+            if (state.layoutDirty) {
+                state.diagram.subgraphs
+                    .slice()
+                    .sort((a, b) => getSubgraphDepth(b.subgraph_id) - getSubgraphDepth(a.subgraph_id))
+                    .forEach((subgraph) => expandSubgraphToContents(subgraph.subgraph_id));
+                state.layoutDirty = false;
+            }
 
             renderSubgraphs();
             renderEdges();
@@ -1004,6 +1189,16 @@
                 title.setAttribute("x", (subgraph.x ?? 40) + 16);
                 title.setAttribute("y", (subgraph.y ?? 40) + 24);
                 title.textContent = subgraph.title;
+                title.addEventListener("pointerdown", startDrag);
+                title.addEventListener("click", (evt) => handleSelectableClick(evt, "subgraph", subgraph.subgraph_id));
+                title.addEventListener("dblclick", (evt) => {
+                    evt.stopPropagation();
+                    openAddNodeDialog(subgraph.subgraph_id, {
+                        x: (subgraph.x ?? 40) + 52,
+                        y: (subgraph.y ?? 40) + 80,
+                    });
+                });
+                title.addEventListener("contextmenu", (evt) => openContextMenu(evt, "subgraph", subgraph.subgraph_id));
 
                 group.appendChild(rect);
                 group.appendChild(title);
@@ -1068,22 +1263,23 @@
                 const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
                 group.dataset.kind = "edge";
                 group.dataset.id = String(index);
+                group.dataset.edgeStyle = edge.style || "solid";
                 const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                line.setAttribute(
-                    "d",
-                    `M ${source.x} ${source.y} C ${source.x + 60} ${source.y}, ${target.x - 60} ${target.y}, ${target.x} ${target.y}`
-                );
-                line.setAttribute(
-                    "class",
-                    `edge ${edge.style || "solid"} ${state.primarySelection?.kind === "edge" && state.primarySelection?.id === String(index) ? "selected" : ""}`.trim()
+                line.setAttribute("d", buildEdgePath(source, target));
+                applyEdgePresentation(
+                    line,
+                    edge.style || "solid",
+                    state.primarySelection?.kind === "edge" && state.primarySelection?.id === String(index)
                 );
                 line.addEventListener("click", (evt) => {
                     evt.stopPropagation();
                     setPrimarySelection("edge", String(index));
+                    render();
                 });
                 line.addEventListener("dblclick", (evt) => {
                     evt.stopPropagation();
                     setPrimarySelection("edge", String(index));
+                    render();
                     notifyStatus("请在左侧详情面板修改边属性");
                 });
                 line.addEventListener("contextmenu", (evt) => openContextMenu(evt, "edge", String(index)));
@@ -1098,10 +1294,12 @@
                     text.addEventListener("click", (evt) => {
                         evt.stopPropagation();
                         setPrimarySelection("edge", String(index));
+                        render();
                     });
                     text.addEventListener("dblclick", (evt) => {
                         evt.stopPropagation();
                         setPrimarySelection("edge", String(index));
+                        render();
                         notifyStatus("请在左侧详情面板修改边属性");
                     });
                     text.addEventListener("contextmenu", (evt) => openContextMenu(evt, "edge", String(index)));
@@ -1123,12 +1321,26 @@
             const source = resolveAnchor(state.edgeDraft.sourceId, state.edgeDraft.pointerWorld);
             const target = state.edgeDraft.pointerWorld;
             const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            line.setAttribute(
-                "d",
-                `M ${source.x} ${source.y} C ${source.x + 60} ${source.y}, ${target.x - 60} ${target.y}, ${target.x} ${target.y}`
-            );
+            line.setAttribute("d", buildEdgePath(source, target));
             line.setAttribute("class", "draft-edge");
             overlayLayer.appendChild(line);
+        }
+
+        function buildEdgePath(source, target) {
+            const deltaX = target.x - source.x;
+            const deltaY = target.y - source.y;
+            const absX = Math.abs(deltaX);
+            const absY = Math.abs(deltaY);
+
+            if (absY > absX * 1.2) {
+                const handle = Math.min(96, Math.max(20, absY * 0.35));
+                const direction = deltaY >= 0 ? 1 : -1;
+                return `M ${source.x} ${source.y} C ${source.x} ${source.y + handle * direction}, ${target.x} ${target.y - handle * direction}, ${target.x} ${target.y}`;
+            }
+
+            const handle = Math.min(96, Math.max(20, absX * 0.35));
+            const direction = deltaX >= 0 ? 1 : -1;
+            return `M ${source.x} ${source.y} C ${source.x + handle * direction} ${source.y}, ${target.x - handle * direction} ${target.y}, ${target.x} ${target.y}`;
         }
 
         function renderMarquee() {
@@ -1176,11 +1388,13 @@
                 alert("边的起点和终点不能相同。");
                 return;
             }
-            state.diagram.edges.push({
-                source: state.edgeDraft.sourceId,
-                target: targetId,
-                label: "",
-                style: "solid",
+            commitMutation(() => {
+                state.diagram.edges.push({
+                    source: state.edgeDraft.sourceId,
+                    target: targetId,
+                    label: "",
+                    style: "solid",
+                });
             });
             setPrimarySelection("edge", String(state.diagram.edges.length - 1));
             cancelEdgeCreation();
@@ -1217,7 +1431,7 @@
                         targets.push({ kind: "node", id: node.node_id, x: node.x ?? 0, y: node.y ?? 0 });
                     }
                 } else {
-                    const subgraphIds = Array.from(getDescendantSubgraphIds(item.id));
+                    const subgraphIds = getDescendantSubgraphIds(item.id);
                     subgraphIds.forEach((subgraphId) => {
                         const subgraph = getSubgraphById(subgraphId);
                         if (subgraph) {
@@ -1258,6 +1472,8 @@
                 kind,
                 id: String(id),
                 pointerId: evt.pointerId,
+                beforeSnapshot: snapshotDiagram(),
+                moved: false,
                 startPoint: point,
                 initialPrimaryX: (kind === "node" ? getNodeById(id)?.x : getSubgraphById(id)?.x) ?? 0,
                 initialPrimaryY: (kind === "node" ? getNodeById(id)?.y : getSubgraphById(id)?.y) ?? 0,
@@ -1265,8 +1481,7 @@
                 offsetY: point.y - (((kind === "node" ? getNodeById(id)?.y : getSubgraphById(id)?.y) ?? 0)),
                 targets: buildDragTargets(kind, id),
             };
-            evt.target.setPointerCapture(evt.pointerId);
-            render();
+            canvas.setPointerCapture(evt.pointerId);
         }
 
         function applyDrag(point) {
@@ -1281,23 +1496,91 @@
             const nextY = Math.round(point.y - state.dragging.offsetY);
             const deltaX = nextX - state.dragging.initialPrimaryX;
             const deltaY = nextY - state.dragging.initialPrimaryY;
+            if (deltaX === 0 && deltaY === 0) {
+                return;
+            }
+            state.dragging.moved = true;
 
             state.dragging.targets.forEach((target) => {
                 if (target.kind === "node") {
                     const node = getNodeById(target.id);
                     if (node) {
-                        node.x = target.x + (nextX - (primary.x ?? 0));
-                        node.y = target.y + (nextY - (primary.y ?? 0));
+                        node.x = target.x + deltaX;
+                        node.y = target.y + deltaY;
                     }
                 } else {
                     const subgraph = getSubgraphById(target.id);
                     if (subgraph) {
-                        subgraph.x = target.x + (nextX - (primary.x ?? 0));
-                        subgraph.y = target.y + (nextY - (primary.y ?? 0));
+                        subgraph.x = target.x + deltaX;
+                        subgraph.y = target.y + deltaY;
                     }
                 }
             });
+            state.layoutDirty = state.dragging.targets.some((target) => {
+                if (target.kind === "node") {
+                    return true;
+                }
+                const subgraph = getSubgraphById(target.id);
+                return Boolean(subgraph?.parent_subgraph);
+            });
             render();
+        }
+
+        function handleInteractivePointerMove(evt) {
+            if (!state.diagram) {
+                return;
+            }
+            const point = getPoint(evt);
+            state.pointerWorld = point;
+
+            if (state.edgeDraft) {
+                state.edgeDraft.pointerWorld = point;
+                render();
+                return;
+            }
+
+            if (state.dragging) {
+                applyDrag(point);
+                return;
+            }
+
+            if (state.marquee) {
+                state.marquee.current = point;
+                render();
+                return;
+            }
+
+            if (state.panning) {
+                const point = screenToCanvas(evt.clientX, evt.clientY);
+                state.view.offsetX = state.panning.startOffsetX + (point.x - state.panning.startPoint.x);
+                state.view.offsetY = state.panning.startOffsetY + (point.y - state.panning.startPoint.y);
+                updateViewportTransform();
+            }
+        }
+
+        function handleInteractivePointerUp(evt) {
+            const dragState = state.dragging;
+            if (dragState) {
+                if (dragState.moved) {
+                    state.layoutDirty = true;
+                    pushHistorySnapshot(dragState.beforeSnapshot);
+                    saveDiagram();
+                    notifyStatus("布局已更新");
+                }
+                state.dragging = null;
+                state.suppressCanvasClick = true;
+                render();
+            }
+            if (state.marquee) {
+                finishMarquee();
+            }
+            if (state.panning) {
+                state.panning = null;
+                canvas.classList.remove("panning");
+            }
+            if (canvas.hasPointerCapture?.(evt.pointerId)) {
+                canvas.releasePointerCapture(evt.pointerId);
+            }
         }
 
         function beginMarquee(point) {
@@ -1345,6 +1628,7 @@
                 state.primarySelection = hits[0];
                 state.selectedItems = hits.slice(1);
             }
+            state.suppressCanvasClick = true;
             state.marquee = null;
             canvas.classList.remove("marquee-mode");
             syncSelectionToQt();
@@ -1365,20 +1649,25 @@
                 getDescendantSubgraphIds(rootId).forEach((id) => subgraphIds.add(id));
             });
 
-            state.diagram.nodes
-                .filter((node) => subgraphIds.has(node.parent_subgraph))
-                .forEach((node) => nodeIds.add(node.node_id));
+            const changed = commitMutation(() => {
+                state.diagram.nodes
+                    .filter((node) => subgraphIds.has(node.parent_subgraph))
+                    .forEach((node) => nodeIds.add(node.node_id));
 
-            state.diagram.nodes = state.diagram.nodes.filter((node) => !nodeIds.has(node.node_id));
-            state.diagram.subgraphs = state.diagram.subgraphs.filter((subgraph) => !subgraphIds.has(subgraph.subgraph_id));
-            state.diagram.edges = state.diagram.edges.filter(
-                (edge, index) =>
-                    !edgeIndexes.has(index) &&
-                    !nodeIds.has(edge.source) &&
-                    !nodeIds.has(edge.target) &&
-                    !subgraphIds.has(edge.source) &&
-                    !subgraphIds.has(edge.target)
-            );
+                state.diagram.nodes = state.diagram.nodes.filter((node) => !nodeIds.has(node.node_id));
+                state.diagram.subgraphs = state.diagram.subgraphs.filter((subgraph) => !subgraphIds.has(subgraph.subgraph_id));
+                state.diagram.edges = state.diagram.edges.filter(
+                    (edge, index) =>
+                        !edgeIndexes.has(index) &&
+                        !nodeIds.has(edge.source) &&
+                        !nodeIds.has(edge.target) &&
+                        !subgraphIds.has(edge.source) &&
+                        !subgraphIds.has(edge.target)
+                );
+            });
+            if (!changed) {
+                return;
+            }
 
             clearSelection();
             render();
@@ -1393,6 +1682,10 @@
             if (!edge) {
                 return;
             }
+            if ((edge.style || "solid") === style) {
+                return;
+            }
+            recordHistory();
             edge.style = style;
             render();
             saveDiagram();
@@ -1407,6 +1700,7 @@
             if (!node || getSubgraphById(node.node_id)) {
                 return;
             }
+            recordHistory();
             const title = node.label || node.node_id;
             const subgraph = {
                 subgraph_id: node.node_id,
@@ -1457,6 +1751,7 @@
                 };
             });
             const average = centers.reduce((sum, entry) => sum + (axis === "x" ? entry.center.x : entry.center.y), 0) / centers.length;
+            recordHistory();
             centers.forEach((entry) => {
                 if (entry.item.kind === "node") {
                     const node = getNodeById(entry.item.id);
@@ -1556,15 +1851,17 @@
                         alert("节点 ID 已存在。");
                         return;
                     }
-                    state.diagram.nodes.push({
-                        node_id: value1,
-                        label: value2 || value1,
-                        parent_subgraph: parentSubgraph,
-                        x: placement.x,
-                        y: placement.y,
-                        width: 160,
-                        height: 56,
-                        anchor_side: "auto",
+                    commitMutation(() => {
+                        state.diagram.nodes.push({
+                            node_id: value1,
+                            label: value2 || value1,
+                            parent_subgraph: parentSubgraph,
+                            x: placement.x,
+                            y: placement.y,
+                            width: 160,
+                            height: 56,
+                            anchor_side: "auto",
+                        });
                     });
                     closeDialog();
                     setPrimarySelection("node", value1);
@@ -1591,16 +1888,18 @@
                         alert("子图 ID 已存在。");
                         return;
                     }
-                    state.diagram.subgraphs.push({
-                        subgraph_id: value1,
-                        title: value2 || value1,
-                        parent_subgraph: parentSubgraph,
-                        direction: "TB",
-                        x: placement.x,
-                        y: placement.y,
-                        width: 280,
-                        height: 180,
-                        anchor_side: "auto",
+                    commitMutation(() => {
+                        state.diagram.subgraphs.push({
+                            subgraph_id: value1,
+                            title: value2 || value1,
+                            parent_subgraph: parentSubgraph,
+                            direction: "TB",
+                            x: placement.x,
+                            y: placement.y,
+                            width: 280,
+                            height: 180,
+                            anchor_side: "auto",
+                        });
                     });
                     closeDialog();
                     setPrimarySelection("subgraph", value1);
@@ -1628,17 +1927,19 @@
                     alert("新的节点 ID 已存在。");
                     return;
                 }
-                state.diagram.edges.forEach((edge) => {
-                    if (edge.source === node.node_id) {
-                        edge.source = newId;
-                    }
-                    if (edge.target === node.node_id) {
-                        edge.target = newId;
-                    }
+                commitMutation(() => {
+                    state.diagram.edges.forEach((edge) => {
+                        if (edge.source === node.node_id) {
+                            edge.source = newId;
+                        }
+                        if (edge.target === node.node_id) {
+                            edge.target = newId;
+                        }
+                    });
+                    node.node_id = newId;
+                    node.label = String(payload.label || "").trim() || newId;
+                    node.anchor_side = String(payload.anchor_side || "auto");
                 });
-                node.node_id = newId;
-                node.label = String(payload.label || "").trim() || newId;
-                node.anchor_side = String(payload.anchor_side || "auto");
                 setPrimarySelection("node", newId);
             } else if (payload.kind === "subgraph") {
                 const subgraph = getSubgraphById(payload.id);
@@ -1654,27 +1955,29 @@
                     alert("新的子图 ID 已存在。");
                     return;
                 }
-                state.diagram.nodes.forEach((node) => {
-                    if (node.parent_subgraph === subgraph.subgraph_id) {
-                        node.parent_subgraph = newId;
-                    }
+                commitMutation(() => {
+                    state.diagram.nodes.forEach((node) => {
+                        if (node.parent_subgraph === subgraph.subgraph_id) {
+                            node.parent_subgraph = newId;
+                        }
+                    });
+                    state.diagram.subgraphs.forEach((item) => {
+                        if (item.parent_subgraph === subgraph.subgraph_id) {
+                            item.parent_subgraph = newId;
+                        }
+                    });
+                    state.diagram.edges.forEach((edge) => {
+                        if (edge.source === subgraph.subgraph_id) {
+                            edge.source = newId;
+                        }
+                        if (edge.target === subgraph.subgraph_id) {
+                            edge.target = newId;
+                        }
+                    });
+                    subgraph.subgraph_id = newId;
+                    subgraph.title = String(payload.label || "").trim() || newId;
+                    subgraph.anchor_side = String(payload.anchor_side || "auto");
                 });
-                state.diagram.subgraphs.forEach((item) => {
-                    if (item.parent_subgraph === subgraph.subgraph_id) {
-                        item.parent_subgraph = newId;
-                    }
-                });
-                state.diagram.edges.forEach((edge) => {
-                    if (edge.source === subgraph.subgraph_id) {
-                        edge.source = newId;
-                    }
-                    if (edge.target === subgraph.subgraph_id) {
-                        edge.target = newId;
-                    }
-                });
-                subgraph.subgraph_id = newId;
-                subgraph.title = String(payload.label || "").trim() || newId;
-                subgraph.anchor_side = String(payload.anchor_side || "auto");
                 setPrimarySelection("subgraph", newId);
             } else if (payload.kind === "edge") {
                 const edge = getEdgeByIndex(payload.id);
@@ -1687,10 +1990,12 @@
                     alert("边的起点或终点不存在。");
                     return;
                 }
-                edge.source = nextSource;
-                edge.target = nextTarget;
-                edge.label = String(payload.label || "").trim();
-                edge.style = String(payload.style || "solid");
+                commitMutation(() => {
+                    edge.source = nextSource;
+                    edge.target = nextTarget;
+                    edge.label = String(payload.label || "").trim();
+                    edge.style = String(payload.style || "solid");
+                });
                 setPrimarySelection("edge", String(payload.id));
             }
             render();
@@ -1740,53 +2045,63 @@
                 closeDialog();
             }
         });
-
-        canvas.addEventListener("pointermove", (evt) => {
-            const point = getPoint(evt);
-            state.pointerWorld = point;
-
-            if (state.edgeDraft) {
-                state.edgeDraft.pointerWorld = point;
-                render();
+        toolbarResizer.addEventListener("pointerdown", (evt) => {
+            evt.preventDefault();
+            state.toolbarResize = {
+                startY: evt.clientY,
+                startHeight: toolbarShell.getBoundingClientRect().height,
+            };
+            toolbarResizer.setPointerCapture(evt.pointerId);
+        });
+        window.addEventListener("pointermove", (evt) => {
+            if (!state.toolbarResize) {
+                if (state.dragging || state.edgeDraft || state.marquee || state.panning) {
+                    handleInteractivePointerMove(evt);
+                }
                 return;
             }
-
-            if (state.dragging) {
-                applyDrag(point);
-                return;
+            setToolbarHeight(state.toolbarResize.startHeight + (evt.clientY - state.toolbarResize.startY));
+        });
+        window.addEventListener("pointerup", (evt) => {
+            state.toolbarResize = null;
+            if (state.dragging || state.marquee || state.panning) {
+                handleInteractivePointerUp(evt);
             }
-
-            if (state.marquee) {
-                state.marquee.current = point;
-                render();
-                return;
-            }
-
-            if (state.panning) {
-                state.view.offsetX = state.panning.startOffsetX + (evt.clientX - state.panning.startClientX);
-                state.view.offsetY = state.panning.startOffsetY + (evt.clientY - state.panning.startClientY);
-                updateViewportTransform();
+        });
+        window.addEventListener("pointercancel", (evt) => {
+            state.toolbarResize = null;
+            if (state.dragging || state.marquee || state.panning) {
+                handleInteractivePointerUp(evt);
             }
         });
 
-        canvas.addEventListener("pointerup", () => {
-            if (state.dragging) {
-                state.dragging = null;
-                render();
-                saveDiagram();
-                notifyStatus("布局已更新");
+        canvas.addEventListener("pointermove", (evt) => {
+            if (state.toolbarResize) {
+                setToolbarHeight(state.toolbarResize.startHeight + (evt.clientY - state.toolbarResize.startY));
+                return;
             }
-            if (state.marquee) {
-                finishMarquee();
+            if (state.dragging || state.edgeDraft || state.marquee || state.panning) {
+                return;
             }
-            if (state.panning) {
-                state.panning = null;
-                canvas.classList.remove("panning");
+            state.pointerWorld = getPoint(evt);
+        });
+
+        toolbarResizer.addEventListener("pointerup", () => {
+            if (!state.toolbarResize) {
+                return;
             }
+            state.toolbarResize = null;
+        });
+        toolbarResizer.addEventListener("pointercancel", () => {
+            state.toolbarResize = null;
         });
 
         canvas.addEventListener("click", () => {
             hideContextMenu();
+            if (state.suppressCanvasClick) {
+                state.suppressCanvasClick = false;
+                return;
+            }
             if (state.edgeDraft && !state.edgeDraft.sourceId) {
                 notifyStatus("请选择边的起点");
                 return;
@@ -1798,25 +2113,25 @@
         });
 
         canvas.addEventListener("dblclick", (evt) => {
-            if (evt.target !== canvas) {
+            if (!isCanvasBackgroundTarget(evt.target)) {
                 return;
             }
             openAddNodeDialog(null, getPoint(evt));
         });
 
         canvas.addEventListener("pointerdown", (evt) => {
-            if (evt.target !== canvas || state.edgeDraft) {
+            if (!isCanvasBackgroundTarget(evt.target) || state.edgeDraft) {
                 return;
             }
             hideContextMenu();
             const point = getPoint(evt);
+            canvas.setPointerCapture(evt.pointerId);
             if (evt.ctrlKey) {
                 beginMarquee(point);
                 return;
             }
             state.panning = {
-                startClientX: evt.clientX,
-                startClientY: evt.clientY,
+                startPoint: screenToCanvas(evt.clientX, evt.clientY),
                 startOffsetX: state.view.offsetX,
                 startOffsetY: state.view.offsetY,
             };
@@ -1825,13 +2140,26 @@
 
         canvas.addEventListener("wheel", (evt) => {
             evt.preventDefault();
+            const looksLikeTrackpad = Math.abs(evt.deltaX) > 0 || Math.abs(evt.deltaY) < 40;
+            if (evt.ctrlKey) {
+                const ratio = Math.min(0.22, Math.max(0.08, Math.abs(evt.deltaY) / 500));
+                const delta = evt.deltaY < 0 ? 1 + ratio : 1 - ratio;
+                setView(state.view.scale * delta, currentViewCenterWorld());
+                return;
+            }
+            if (looksLikeTrackpad) {
+                state.view.offsetX -= evt.deltaX;
+                state.view.offsetY -= evt.deltaY;
+                updateViewportTransform();
+                return;
+            }
             const delta = evt.deltaY < 0 ? 1.1 : 0.9;
             setView(state.view.scale * delta, currentViewCenterWorld());
         }, { passive: false });
 
         canvas.addEventListener("contextmenu", (evt) => {
             evt.preventDefault();
-            if (evt.target === canvas) {
+            if (isCanvasBackgroundTarget(evt.target)) {
                 openCanvasContextMenu(evt);
             }
         });
@@ -1864,6 +2192,16 @@
                 evt.preventDefault();
                 alignSelection("y");
             }
+            if (evt.ctrlKey && evt.key.toLowerCase() === "t") {
+                evt.preventDefault();
+                if (state.primarySelection?.kind === "subgraph") {
+                    fitSubgraphToContents(state.primarySelection.id);
+                }
+            }
+            if (evt.ctrlKey && !evt.shiftKey && evt.key.toLowerCase() === "z" && !isTyping) {
+                evt.preventDefault();
+                undoDiagramChange();
+            }
         });
 
         window.addEventListener("click", (evt) => {
@@ -1880,6 +2218,9 @@
             state.panning = null;
             state.edgeDraft = null;
             state.marquee = null;
+            state.history.undoStack = [];
+            state.history.redoStack = [];
+            state.layoutDirty = true;
             hideContextMenu();
             closeDialog();
             centerView(0.5);

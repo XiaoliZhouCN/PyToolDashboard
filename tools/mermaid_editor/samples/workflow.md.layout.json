@@ -5,147 +5,117 @@
     "diagram_1": {
       "nodes": {
         "start": {
-          "x": 457,
-          "y": -118,
+          "x": -228,
+          "y": 57,
           "anchor_side": "auto"
         },
         "QtEvenLoop": {
-          "x": 1328,
-          "y": 46,
-          "anchor_side": "auto"
-        },
-        "main_func_main_enter": {
-          "x": 702,
-          "y": 140,
-          "anchor_side": "auto"
-        },
-        "main_func_main_exit": {
-          "x": 708,
-          "y": 260,
+          "x": -228,
+          "y": 1047,
           "anchor_side": "auto"
         },
         "app_func_init_enter": {
-          "x": 1080,
-          "y": 248,
+          "x": 344,
+          "y": 286,
           "anchor_side": "auto"
         },
         "app_func_init_exit": {
-          "x": 1075,
-          "y": 587,
-          "anchor_side": "auto"
-        },
-        "app_func_run_enter": {
-          "x": 1067.75,
-          "y": 779,
-          "anchor_side": "auto"
-        },
-        "app_func_run_exit": {
-          "x": 1079,
-          "y": 964,
-          "anchor_side": "auto"
-        },
-        "app_func_exec_enter": {
-          "x": 1080,
-          "y": 1130,
-          "anchor_side": "auto"
-        },
-        "app_func_exec_exit": {
-          "x": 1091,
-          "y": 1314,
+          "x": 349,
+          "y": 573,
           "anchor_side": "auto"
         },
         "nmainwindow_func_show": {
-          "x": 1489,
-          "y": 265,
+          "x": 684,
+          "y": 720,
           "anchor_side": "auto"
         },
         "qapp_func_exec": {
-          "x": 1498,
-          "y": 1144,
+          "x": 1021,
+          "y": 934,
           "anchor_side": "auto"
         },
         "qmainwindow_func_show": {
-          "x": 1870,
-          "y": 298,
+          "x": 1021,
+          "y": 723,
           "anchor_side": "auto"
         }
       },
       "subgraphs": {
         "Main": {
-          "x": 646,
-          "y": 52,
-          "width": 278,
-          "height": 320,
-          "anchor_side": "auto"
-        },
-        "main_func_main": {
-          "x": 674,
-          "y": 96,
-          "width": 222,
-          "height": 248,
-          "anchor_side": "auto"
-        },
-        "RenderApp": {
-          "x": 1004,
-          "y": 160,
-          "width": 339,
-          "height": 1266,
-          "anchor_side": "auto"
-        },
-        "app_func_init": {
-          "x": 1032,
-          "y": 204,
-          "width": 283,
-          "height": 469,
-          "anchor_side": "auto"
-        },
-        "app_func_run": {
-          "x": 1039.75,
-          "y": 735,
-          "width": 227.25,
-          "height": 313,
-          "anchor_side": "auto"
-        },
-        "app_func_exec": {
-          "x": 1052,
-          "y": 1086,
-          "width": 227,
-          "height": 312,
-          "anchor_side": "auto"
-        },
-        "NMainWindow": {
-          "x": 1461,
-          "y": 221,
+          "x": 36,
+          "y": 134,
           "width": 220,
           "height": 140,
           "anchor_side": "auto"
         },
+        "main_func_main": {
+          "x": 64,
+          "y": 178,
+          "width": 160,
+          "height": 56,
+          "anchor_side": "auto"
+        },
+        "RenderApp": {
+          "x": 288,
+          "y": 198,
+          "width": 277,
+          "height": 816,
+          "anchor_side": "auto"
+        },
+        "app_func_init": {
+          "x": 316,
+          "y": 242,
+          "width": 221,
+          "height": 415,
+          "anchor_side": "auto"
+        },
+        "app_func_run": {
+          "x": 354,
+          "y": 764,
+          "width": 160,
+          "height": 56,
+          "anchor_side": "auto"
+        },
+        "app_func_exec": {
+          "x": 359,
+          "y": 930,
+          "width": 160,
+          "height": 56,
+          "anchor_side": "auto"
+        },
+        "NMainWindow": {
+          "x": 631,
+          "y": 199,
+          "width": 285,
+          "height": 634,
+          "anchor_side": "auto"
+        },
         "NWidget": {
-          "x": 72,
-          "y": 1812,
-          "width": 416,
-          "height": 180,
+          "x": 966,
+          "y": 201,
+          "width": 160,
+          "height": 56,
           "anchor_side": "auto"
         },
         "Qt": {
-          "x": 1391,
-          "y": 88,
-          "width": 748,
-          "height": 1282,
+          "x": 963,
+          "y": 635,
+          "width": 276,
+          "height": 423,
           "anchor_side": "auto"
         },
         "QApplication": {
-          "x": 1419,
-          "y": 603,
-          "width": 604,
-          "height": 739,
+          "x": 991,
+          "y": 890,
+          "width": 220,
+          "height": 140,
           "anchor_side": "auto"
         },
         "QMainWindow": {
-          "x": 1553,
-          "y": 132,
-          "width": 558,
-          "height": 956,
+          "x": 991,
+          "y": 679,
+          "width": 220,
+          "height": 140,
           "anchor_side": "auto"
         }
       }
@@ -153,120 +123,182 @@
     "diagram_2": {
       "nodes": {
         "EventLoopStart": {
-          "x": 96.0,
-          "y": 96.0,
+          "x": 273,
+          "y": -28,
           "anchor_side": "auto"
         },
         "nwidget_func_update_info": {
-          "x": 326.0,
-          "y": 96.0,
-          "anchor_side": "auto"
+          "x": 799,
+          "y": 316,
+          "anchor_side": "bottom"
         },
         "nwidget_func_showEvent": {
-          "x": 112.0,
-          "y": 300.0,
-          "anchor_side": "auto"
+          "x": 158,
+          "y": 183,
+          "anchor_side": "bottom"
         },
         "nwidget_func_resizeEvent": {
-          "x": 342.0,
-          "y": 300.0,
+          "x": 417,
+          "y": 185,
+          "anchor_side": "bottom"
+        },
+        "nwidget_func_paintEvent_enter": {
+          "x": 662,
+          "y": 725,
           "anchor_side": "auto"
         },
-        "nwidget_func_paintEvent": {
-          "x": 112.0,
-          "y": 408.0,
+        "nwidget_func_paintEvent_exit": {
+          "x": 892,
+          "y": 725,
           "anchor_side": "auto"
         },
         "nwidget_func_paintEngine": {
-          "x": 342.0,
-          "y": 408.0,
+          "x": -35,
+          "y": 527,
           "anchor_side": "auto"
         },
-        "nwidget_func_InitializeRendererIfNeeded": {
-          "x": 112.0,
-          "y": 516.0,
+        "nwidget_func_InitializeRendererIfNeeded_enter": {
+          "x": 128,
+          "y": 936,
           "anchor_side": "auto"
         },
-        "nwidget_func_RenderFrame": {
-          "x": 342.0,
-          "y": 516.0,
+        "nwidget_func_InitializeRendererIfNeeded_exit": {
+          "x": 358,
+          "y": 936,
+          "anchor_side": "auto"
+        },
+        "nwidget_func_RenderFrame_enter": {
+          "x": 128,
+          "y": 1152,
+          "anchor_side": "auto"
+        },
+        "nwidget_func_RenderFrame_exit": {
+          "x": 358,
+          "y": 1152,
           "anchor_side": "auto"
         },
         "nwidget_func_update": {
-          "x": 112.0,
-          "y": 624.0,
-          "anchor_side": "auto"
+          "x": 284,
+          "y": 347,
+          "anchor_side": "bottom"
         },
         "nwidget_func_Resize": {
-          "x": 342.0,
-          "y": 624.0,
+          "x": -35,
+          "y": 613,
           "anchor_side": "auto"
         },
         "qapp_func_exec": {
-          "x": 128.0,
-          "y": 960.0,
+          "x": 1226,
+          "y": 227,
           "anchor_side": "auto"
         },
         "qmainwindow_func_show": {
-          "x": 128.0,
-          "y": 1224.0,
+          "x": 1225,
+          "y": 407,
           "anchor_side": "auto"
         },
         "qwidget_func_showEvent": {
-          "x": 128.0,
-          "y": 1488.0,
+          "x": 1231,
+          "y": 591,
           "anchor_side": "auto"
         },
         "qwidget_func_update": {
-          "x": 358.0,
-          "y": 1488.0,
+          "x": 1461,
+          "y": 591,
           "anchor_side": "auto"
         },
         "qwidget_func_resizeEvent": {
-          "x": 128.0,
-          "y": 1596.0,
+          "x": 1231,
+          "y": 699,
           "anchor_side": "auto"
         },
         "qwidget_func_Resize": {
-          "x": 358.0,
-          "y": 1596.0,
+          "x": 1461,
+          "y": 699,
+          "anchor_side": "auto"
+        },
+        "renderfactory_func_createRenderer": {
+          "x": 1153,
+          "y": 1452,
           "anchor_side": "auto"
         }
       },
       "subgraphs": {
         "NWidget": {
-          "x": 72.0,
-          "y": 228.0,
-          "width": 466.0,
-          "height": 552.0,
+          "x": -63,
+          "y": 139,
+          "width": 1222,
+          "height": 1149,
+          "anchor_side": "auto"
+        },
+        "nwidget_func_paintEvent": {
+          "x": 622,
+          "y": 653,
+          "width": 466,
+          "height": 180,
+          "anchor_side": "auto"
+        },
+        "nwidget_func_InitializeRendererIfNeeded": {
+          "x": 88,
+          "y": 864,
+          "width": 466,
+          "height": 180,
+          "anchor_side": "auto"
+        },
+        "nwidget_func_RenderFrame": {
+          "x": 88,
+          "y": 1080,
+          "width": 466,
+          "height": 180,
           "anchor_side": "auto"
         },
         "Qt": {
-          "x": 72.0,
-          "y": 816.0,
-          "width": 518.0,
-          "height": 996.0,
+          "x": 1169,
+          "y": 139,
+          "width": 508,
+          "height": 672,
           "anchor_side": "auto"
         },
         "QApplication": {
-          "x": 88.0,
-          "y": 888.0,
-          "width": 416.0,
-          "height": 228.0,
+          "x": 1198,
+          "y": 183,
+          "width": 220,
+          "height": 140,
           "anchor_side": "auto"
         },
         "QMainWindow": {
-          "x": 88.0,
-          "y": 1152.0,
-          "width": 416.0,
-          "height": 228.0,
+          "x": 1197,
+          "y": 363,
+          "width": 220,
+          "height": 140,
           "anchor_side": "auto"
         },
         "QWidget": {
-          "x": 88.0,
-          "y": 1416.0,
-          "width": 466.0,
-          "height": 336.0,
+          "x": 1203,
+          "y": 547,
+          "width": 446,
+          "height": 236,
+          "anchor_side": "auto"
+        },
+        "IRenderer": {
+          "x": 632,
+          "y": 1311,
+          "width": 296,
+          "height": 180,
+          "anchor_side": "auto"
+        },
+        "RenderFactory": {
+          "x": 1113,
+          "y": 1380,
+          "width": 296,
+          "height": 180,
+          "anchor_side": "auto"
+        },
+        "ForwardRenderer": {
+          "x": 1090,
+          "y": 1647,
+          "width": 296,
+          "height": 180,
           "anchor_side": "auto"
         }
       }

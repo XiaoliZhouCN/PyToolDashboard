@@ -21,6 +21,7 @@ package-dir = {"" = "src"}
 [tool.setuptools.package-data]
 ptd_tool_mermaid_editor = [
   "app/static/*.html",
+  "presentation/web/*.html",
   "schemas/*.json",
 ]
 

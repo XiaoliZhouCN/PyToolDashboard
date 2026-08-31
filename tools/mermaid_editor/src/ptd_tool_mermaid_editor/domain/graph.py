@@ -29,6 +29,8 @@ class EdgeModel:
     target: str
     label: str = ""
     style: str = "solid"
+    source_anchor_side: str = "auto"
+    target_anchor_side: str = "auto"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

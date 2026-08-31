@@ -16,12 +16,25 @@ PyToolDashboard/
 ├── dashboard/   # 平台入口、注册表、预览、调度与 UI
 ├── tools/       # 独立工具集合
 ├── packages/    # dashboard 与 tools 共享的契约、运行时和基础库
-├── docs/        # 架构、规范、协议和设计记录
+├── docs/        # 架构、规范、协议、设计记录与 agent 协作文档
 ├── launchers/   # 面向工作区项目的启动脚本包装层
 ├── scripts/     # 仓库级辅助脚本
 ├── tests/       # 仓库级集成测试与契约测试
 └── examples/    # 示例数据与演示输入输出
 ```
+
+## 2.1 Agent 协作治理
+
+除运行时代码结构外，仓库还应维护一套稳定的 Agent 协作治理文档，用于定义：
+
+- Agent 类型和职责边界
+- Agent to Agent 沟通目录
+- 多 Agent 并行开发时的目录归属
+
+推荐入口：
+
+- [docs/architecture/AGENTMANAGER_TO_AGENT.md](file:///d:/Repositories/PyToolDashboard/docs/architecture/AGENTMANAGER_TO_AGENT.md)
+- [docs/conventions/AGENT_ORGANIZATION.md](file:///d:/Repositories/PyToolDashboard/docs/conventions/AGENT_ORGANIZATION.md)
 
 ## 3. 分层原则
 

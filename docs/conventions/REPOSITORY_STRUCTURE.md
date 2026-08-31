@@ -76,7 +76,24 @@ packages/
 - 不使用空格、不使用中文目录名
 - 避免 `misc`、`common`、`temp` 这类含义不清的目录名
 
-## 6. launchers 目录建议
+## 6. Agent 沟通目录建议
+
+推荐在架构目录下固定保留：
+
+```text
+docs/architecture/
+├── AGENTMANAGER_TO_AGENT.md
+└── agent_to_agent/
+    └── README.md
+```
+
+说明：
+
+- `AGENTMANAGER_TO_AGENT.md` 是 Agent 开工前的入口文档
+- `agent_to_agent/` 用于存放 Agent 间沟通、目录归属和交接说明
+- 仓库级稳定规则不应长期停留在 `agent_to_agent/`，应上收至正式规范
+
+## 7. launchers 目录建议
 
 ```text
 launchers/
@@ -92,7 +109,7 @@ launchers/
 - `scripts/` 与 `launchers/` 职责必须分离，前者偏开发维护，后者偏运行入口。
 - 所有 launcher 都必须显式处理“主体项目目录”作为运行时工作目录。
 
-## 7. 目录演进规则
+## 8. 目录演进规则
 
 - 新建 tool 时，优先复制“标准骨架”，不要自由发挥目录结构。
 - 同类职责目录应在所有 tool 中保持一致。

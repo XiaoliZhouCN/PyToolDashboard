@@ -23,6 +23,8 @@
 
 当前已维护的独立 launcher：
 
+- `dashboard.bat`
+- `dashboard.sh`
 - `tool_mermaid_editor.bat`
 - `tool_mermaid_editor.sh`
 

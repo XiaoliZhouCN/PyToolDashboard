@@ -17,6 +17,7 @@ from ptd_tool_mermaid_editor.domain.graph import EdgeModel, MermaidDiagram, Node
 from ptd_tool_mermaid_editor.domain.diagram_editor import DiagramEditor
 from ptd_tool_mermaid_editor.domain.graph import SubgraphModel
 from ptd_tool_mermaid_editor.infra.markdown_loader import MarkdownLoader
+from ptd_tool_mermaid_editor.infra.repository.layout_repository import LayoutRepository
 from ptd_tool_mermaid_editor.preview.service import build_preview_response
 
 try:
@@ -99,6 +100,22 @@ line2"]
         self.assertNotIn("app_func_exec", node_ids)
         self.assertEqual(diagram.edges[0].target, "app_func_exec")
 
+    def test_parse_edge_before_late_node_definition_reuses_defined_node(self) -> None:
+        source = """flowchart TD
+    start --> later_node
+    subgraph Main["Main"]
+        direction TB
+        later_node["Later"]
+    end"""
+
+        diagram = self.parser.parse(source, index=0)
+
+        node_ids = {node.node_id for node in diagram.nodes}
+        top_level_nodes = {node.node_id for node in diagram.nodes if node.parent_subgraph is None}
+        self.assertIn("later_node", node_ids)
+        self.assertNotIn("later_node", top_level_nodes)
+        self.assertEqual(diagram.edges[0].target, "later_node")
+
     def test_default_layout_avoids_overlap_for_top_level_items(self) -> None:
         source = """flowchart TD
     start
@@ -125,6 +142,115 @@ line2"]
             for right in boxes[index + 1 :]:
                 self.assertFalse(self._boxes_overlap(left, right))
 
+    def test_default_layout_respects_nested_subgraph_direction(self) -> None:
+        source = """flowchart TD
+    subgraph Parent["Parent"]
+        direction TB
+        subgraph Child["Child"]
+            direction LR
+            a["A"]
+            b["B"]
+        end
+    end"""
+
+        diagram = self.parser.parse(source, index=0)
+        node_a = next(node for node in diagram.nodes if node.node_id == "a")
+        node_b = next(node for node in diagram.nodes if node.node_id == "b")
+
+        self.assertGreater(node_b.x, node_a.x)
+        self.assertAlmostEqual(node_b.y, node_a.y, delta=1)
+
+    def test_default_layout_respects_direction_for_nested_subgraph_descendants(self) -> None:
+        source = """flowchart TD
+    subgraph Parent["Parent"]
+        direction TB
+        subgraph Child["Child"]
+            direction TB
+            subgraph GrandA["GrandA"]
+                direction LR
+                a["A"]
+                b["B"]
+            end
+            subgraph GrandB["GrandB"]
+                direction TB
+                c["C"]
+                d["D"]
+                e["E"]
+            end
+        end
+    end"""
+
+        diagram = self.parser.parse(source, index=0)
+        node_a = next(node for node in diagram.nodes if node.node_id == "a")
+        node_b = next(node for node in diagram.nodes if node.node_id == "b")
+        node_c = next(node for node in diagram.nodes if node.node_id == "c")
+        node_e = next(node for node in diagram.nodes if node.node_id == "e")
+        grand_a = next(subgraph for subgraph in diagram.subgraphs if subgraph.subgraph_id == "GrandA")
+        grand_b = next(subgraph for subgraph in diagram.subgraphs if subgraph.subgraph_id == "GrandB")
+
+        self.assertGreater(grand_b.y, grand_a.y)
+        self.assertGreater(node_b.x, node_a.x)
+        self.assertAlmostEqual(node_b.y, node_a.y, delta=1)
+        self.assertGreater(node_e.y, node_c.y)
+
+    def test_layout_repository_restores_persisted_layout_for_reparsed_diagram(self) -> None:
+        source = """flowchart TD
+    start
+    subgraph Main["Main"]
+        direction TB
+        task["Task"]
+    end"""
+
+        stored_diagram = MermaidDiagram(
+            diagram_id="diagram_1",
+            title="Diagram 1",
+            chart_type="flowchart",
+            direction="TD",
+            source=source,
+            nodes=[
+                NodeModel(node_id="start", label="start", x=420.0, y=160.0),
+                NodeModel(node_id="task", label="Task", parent_subgraph="Main", x=520.0, y=280.0),
+            ],
+            subgraphs=[
+                SubgraphModel(
+                    subgraph_id="Main",
+                    title="Main",
+                    direction="TB",
+                    x=400.0,
+                    y=220.0,
+                    width=360.0,
+                    height=240.0,
+                )
+            ],
+        )
+        reparsed = self.parser.parse(
+            """flowchart TD
+    start
+    finish
+    subgraph Main["Main"]
+        direction TB
+        task["Task"]
+    end""",
+            index=0,
+        )
+        repo = LayoutRepository()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            markdown_path = Path(temp_dir) / "sample.md"
+            markdown_path.write_text(source, encoding="utf-8")
+            repo.save(markdown_path, [stored_diagram])
+            repo.restore_diagram(markdown_path, reparsed, diagram_id="diagram_1")
+
+        nodes = {node.node_id: node for node in reparsed.nodes}
+        subgraphs = {subgraph.subgraph_id: subgraph for subgraph in reparsed.subgraphs}
+
+        self.assertEqual((nodes["start"].x, nodes["start"].y), (420.0, 160.0))
+        self.assertEqual((nodes["task"].x, nodes["task"].y), (520.0, 280.0))
+        self.assertEqual((subgraphs["Main"].x, subgraphs["Main"].y), (400.0, 220.0))
+        self.assertEqual((subgraphs["Main"].width, subgraphs["Main"].height), (360.0, 240.0))
+        self.assertIsNotNone(nodes["finish"].x)
+        self.assertIsNotNone(nodes["finish"].y)
+
     def test_serialize_and_parse_edge_styles_round_trip(self) -> None:
         diagram = MermaidDiagram(
             diagram_id="diagram_1",
@@ -150,6 +276,36 @@ line2"]
         self.assertEqual(reparsed.edges[0].label, "next")
         self.assertEqual(reparsed.edges[0].style, "solid")
         self.assertEqual(reparsed.edges[1].style, "dotted")
+
+    def test_serialize_and_parse_edge_anchor_sides_round_trip(self) -> None:
+        diagram = MermaidDiagram(
+            diagram_id="diagram_1",
+            title="Diagram 1",
+            chart_type="flowchart",
+            direction="TD",
+            source="",
+            nodes=[
+                NodeModel(node_id="start", label="start"),
+                NodeModel(node_id="done", label="done"),
+            ],
+            edges=[
+                EdgeModel(
+                    source="start",
+                    target="done",
+                    label="",
+                    style="solid",
+                    source_anchor_side="right",
+                    target_anchor_side="top",
+                )
+            ],
+        )
+
+        serialized = self.parser.serialize(diagram)
+        reparsed = self.parser.parse(serialized, index=0)
+
+        self.assertIn("%% ptd-edge-anchors: source=right, target=top", serialized)
+        self.assertEqual(reparsed.edges[0].source_anchor_side, "right")
+        self.assertEqual(reparsed.edges[0].target_anchor_side, "top")
 
     def test_diagram_editor_node_operations_keep_edges_consistent(self) -> None:
         diagram = MermaidDiagram(

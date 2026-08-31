@@ -5,9 +5,6 @@ flowchart TD
     subgraph Main["main"]
         direction TB
         subgraph main_func_main["main()"]
-            direction TB
-            main_func_main_enter["enter"]
-            main_func_main_exit["exit"]
         end
     end
     subgraph RenderApp["RenderApp"]
@@ -19,13 +16,9 @@ flowchart TD
         end
         subgraph app_func_run["Run()"]
             direction TB
-            app_func_run_enter["enter"]
-            app_func_run_exit["exit"]
         end
         subgraph app_func_exec["exec()"]
             direction TB
-            app_func_exec_enter["enter"]
-            app_func_exec_exit["exit"]
         end
     end
     subgraph NMainWindow["NMainWindow"]
@@ -46,20 +39,18 @@ flowchart TD
         end
     end
 
-    nmainwindow_func_show ==>  app_func_exec==> QtEvenLoop
     app_func_init_enter --- app_func_init_exit
     app_func_init_enter --make_unique--> NMainWindow
     NMainWindow --Constructor--> NWidget
-    app_func_run_enter --- app_func_run_exit
-    app_func_exec_enter --- app_func_exec_exit
     nmainwindow_func_show -.-> qmainwindow_func_show
     app_func_exec -.-> qapp_func_exec
     start --> main_func_main
-    app_func_init --> app_func_run
+    main_func_main ==> app_func_init
+    nmainwindow_func_show --> app_func_exec
+    app_func_exec --> QtEvenLoop
     app_func_run --> nmainwindow_func_show
-    main_func_main_enter --> main_func_main_exit
-    main_func_main_enter --> app_func_init_enter
-    main_func_main_enter --实例化--> RenderApp
+    app_func_init_exit --> app_func_run
+    start --- QtEvenLoop
 ```
 
 ```mermaid

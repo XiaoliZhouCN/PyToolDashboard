@@ -5,6 +5,14 @@ import json
 import sys
 from pathlib import Path
 
+from ptd_tool_mermaid_editor.app.bootstrap import create_main_window
+from ptd_tool_mermaid_editor.app.runtime import (
+    RuntimeContext,
+    resolve_existing_path,
+    resolve_optional_path,
+    tool_root_from_path,
+)
+
 
 EXIT_OK = 0
 EXIT_INVALID_ARGUMENTS = 2
@@ -128,27 +136,26 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def _launch_command(namespace: argparse.Namespace) -> int:
     project_root = namespace.project_root.resolve()
-    markdown_file = _resolve_optional_path(namespace.markdown_file, project_root)
+    markdown_file = resolve_optional_path(namespace.markdown_file, project_root)
 
     from PySide6.QtWidgets import QApplication
-
-    from ptd_tool_mermaid_editor.app.main_window import MainWindow
 
     app = QApplication(sys.argv)
     app.setApplicationName("Mermaid Editor")
 
-    window = MainWindow(
-        tool_root=_tool_root(),
+    context = RuntimeContext(
+        tool_root=tool_root_from_path(Path(__file__)),
         project_root=project_root,
         initial_markdown_path=markdown_file,
     )
+    window = create_main_window(context)
     window.show()
     return app.exec()
 
 
 def _preview_command(namespace: argparse.Namespace) -> int:
     project_root = namespace.project_root.resolve()
-    markdown_file = _resolve_required_path(namespace.markdown_file, project_root)
+    markdown_file = resolve_existing_path(namespace.markdown_file, project_root)
 
     from ptd_tool_mermaid_editor.preview.service import build_preview_response
 
@@ -176,20 +183,3 @@ def _action_command(namespace: argparse.Namespace) -> int:
     print(json.dumps(response, indent=2, ensure_ascii=False))
     return EXIT_OK
 
-
-def _resolve_optional_path(path: Path | None, project_root: Path) -> Path | None:
-    if path is None:
-        return None
-    return _resolve_required_path(path, project_root)
-
-
-def _resolve_required_path(path: Path, project_root: Path) -> Path:
-    resolved = path if path.is_absolute() else project_root / path
-    resolved = resolved.resolve()
-    if not resolved.exists():
-        raise FileNotFoundError(f"Input Markdown file does not exist: {resolved}")
-    return resolved
-
-
-def _tool_root() -> Path:
-    return Path(__file__).resolve().parents[3]

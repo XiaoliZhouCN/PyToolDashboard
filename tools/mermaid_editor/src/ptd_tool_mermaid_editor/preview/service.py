@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from ptd_tool_mermaid_editor.infra.markdown_loader import MarkdownLoader
+from ptd_tool_mermaid_editor.parsing.markdown.loader import MarkdownLoader
 
 
 def build_preview_response(

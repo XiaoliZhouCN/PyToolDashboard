@@ -7,6 +7,7 @@
 | `README.md` | 仓库级介绍、快速开始、模块导航 |
 | `docs/architecture/` | 架构设计、边界、依赖关系 |
 | `docs/architecture/AGENTMANAGER_TO_AGENT.md` | Agent 类型分流、必读文件与按需阅读规则 |
+| `docs/architecture/agent_to_agent/` | Agent 间架构沟通、交接和职责归属记录 |
 | `docs/contracts/` | tool 与 dashboard 的协议 |
 | `docs/conventions/` | 规范与约束 |
 | `launchers/README.md` | 启动脚本目录说明与使用约定 |
@@ -75,6 +76,8 @@
 - 协议文档必须带版本
 - 示例优先给最小可运行样例
 - 限制与假设要显式写出
+- Agent 间临时协作记录优先放 `docs/architecture/agent_to_agent/`
+- 已稳定的协作规则应尽快上收为正式规范，避免长期停留在 issue 记录里
 
 ## 6. 文档维护规则
 
