@@ -3,19 +3,20 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 
+from PySide6.QtCore import QObject, Signal, Slot
+
 from ptd_tool_mermaid_editor.protocols import (
     MESSAGE_DIAGRAM_SAVE,
     MESSAGE_PAGE_READY,
     MESSAGE_SELECTION_SYNC,
     MESSAGE_STATUS_UPDATE,
     QT_BRIDGE_TARGET,
-    WEB_RUNTIME_SOURCE,
-    WEB_TO_QT_MESSAGE_TYPES,
     RuntimeMessage,
     RuntimeMessageError,
+    WEB_RUNTIME_SOURCE,
+    WEB_TO_QT_MESSAGE_TYPES,
     build_web_to_qt_message,
 )
-from PySide6.QtCore import QObject, Signal, Slot
 
 
 class EditorBridge(QObject):
